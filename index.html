@@ -225,11 +225,18 @@
     <div id="view-dashboard" class="app-view w-full max-w-6xl mx-auto animate-slide">
         <header class="flex flex-col md:flex-row justify-between items-end md:items-center gap-6 mb-10">
             <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-8 h-8 rounded-lg bg-sky-500/20 flex items-center justify-center">
-                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-sky-400"></i>
+                <div class="flex items-center gap-4 mb-2">
+                    <!-- Logo dengan bingkai sama seperti Analytics -->
+                    <div class="w-12 h-12 rounded-2xl bg-sky-500/20 flex items-center justify-center flex-shrink-0">
+                        <img src="https://lh3.googleusercontent.com/d/15zyF01OHtEgTl8p6bvEkz7xw30ByE2en" 
+                             onerror="this.src='https://placehold.co/48x48/1e293b/4facfe?text=ADAB'"
+                             class="w-8 h-8 object-contain" alt="Logo">
                     </div>
-                    <h2 class="text-2xl font-bold tracking-tight">Dashboard ADAB</h2>
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Dashboard ADAB</h2>
+                        <!-- Teks sekolah sama seperti Analytics -->
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400">SMK NEGERI 2 TEGALSARI</p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3">
                     <span id="user-display" class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Memuat Sesi...</span>
