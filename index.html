@@ -196,24 +196,13 @@
             <div class="hidden sm:block w-[80px]"></div>
         </div>
 
+        <!-- Judul Laporan (BERSIH, tanpa indikator LIVE) -->
         <div class="text-center mb-10 font-modern">
             <h1 id="report-title" class="text-14pt font-bold text-gray-800 uppercase leading-snug">
                 DAFTAR HADIR E-PRESENSI<br>
                 SMK NEGERI 2 TEGALSARI
             </h1>
             <p class="text-12pt text-gray-600 mt-2 font-semibold" id="current-date"></p>
-            
-            <!-- ✅ INDIKATOR LIVE AUTO-REFRESH -->
-            <div class="flex items-center justify-center gap-2 mt-4">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                </span>
-                <p class="text-xs font-medium text-gray-500 tracking-wide">
-                    LIVE &bull; Diperbarui <span id="last-update" class="font-semibold text-gray-700">-</span>
-                    &bull; Berikutnya <span id="next-update" class="font-semibold text-blue-600">60</span>s
-                </p>
-            </div>
         </div>
 
         <div id="app-container" class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200">
@@ -340,26 +329,18 @@
         const SHEET_CSV_URL_IZIN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=457704213&single=true&output=csv';
 
         const COLUMN_CONFIG_HADIR = {
-            nama: 8,
-            kelas: 9,
-            jurusan: 10,
-            waktu: 11,
-            koordinat: 12,
-            jarak: 13
+            nama: 8, kelas: 9, jurusan: 10,
+            waktu: 11, koordinat: 12, jarak: 13
         };
 
         const COLUMN_CONFIG_IZIN = {
-            nama: 1,
-            kelas: 2,
-            jurusan: 3,
-            waktu: 4,
-            jenis_izin: 7,
-            keterangan: 8
+            nama: 1, kelas: 2, jurusan: 3,
+            waktu: 4, jenis_izin: 7, keterangan: 8
         };
 
         const ROWS_PER_PAGE = 20;
 
-        // ✅ KONFIGURASI AUTO-REFRESH (dalam detik)
+        // ✅ KONFIGURASI AUTO-REFRESH (dalam detik) - tetap aktif di latar belakang
         const AUTO_REFRESH_SECONDS = 60;
 
         const loadingState = document.getElementById('loading-state');
@@ -378,8 +359,6 @@
         const badgeHadir = document.getElementById('badge-hadir');
         const badgeIzin = document.getElementById('badge-izin');
         const filterGrid = document.getElementById('filter-grid');
-        const lastUpdateEl = document.getElementById('last-update');
-        const nextUpdateEl = document.getElementById('next-update');
 
         const filterNama = document.getElementById('filter-nama');
         const filterKelas = document.getElementById('filter-kelas');
@@ -392,8 +371,7 @@
         dateDisplay.innerText = new Date().toLocaleDateString('id-ID', options);
 
         let activeTab = 'hadir';
-        let isFetching = false;              // ✅ Cegah fetch bertumpuk
-        let countdown = AUTO_REFRESH_SECONDS;
+        let isFetching = false;
         
         const dataStore = {
             hadir: {
@@ -419,7 +397,6 @@
             };
         }
 
-        // ✅ FUNGSI fetchCSV DENGAN PARSER RFC 4180
         async function fetchCSV(url) {
             const response = await fetch(`${url}&t=${new Date().getTime()}`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch');
@@ -484,15 +461,14 @@
                 .trim();
         }
 
-        // ✅ FUNGSI FETCH UTAMA - mode: 'manual' | 'auto'
+        // ✅ fetchAllData dengan mode 'manual' atau 'auto' (silent)
         async function fetchAllData(mode = 'manual') {
             const isAuto = (mode === 'auto');
             
-            // Cegah fetch bertumpuk
             if (isFetching) return;
             isFetching = true;
 
-            // Mode auto: silent update (tanpa loading spinner, tanpa flicker)
+            // Mode manual: tampilkan loading. Mode auto: silent
             if (!isAuto) {
                 loadingState.classList.remove('hidden');
                 errorState.classList.add('hidden');
@@ -500,7 +476,7 @@
             }
 
             try {
-                // Simpan snapshot data lama untuk deteksi perubahan
+                // Snapshot data lama untuk deteksi perubahan
                 const prevHadir = JSON.stringify(dataStore.hadir.all);
                 const prevIzin = JSON.stringify(dataStore.izin.all);
 
@@ -533,9 +509,6 @@
                     return;
                 }
 
-                // ✅ Update jam "terakhir diperbarui"
-                updateLastUpdate();
-
                 if (isAuto) {
                     // Pulih dari error jika data kembali tersedia
                     if (!errorState.classList.contains('hidden')) {
@@ -554,36 +527,21 @@
                 }
 
             } catch (error) {
-                // Mode auto: abaikan error jaringan sesaat, coba lagi di interval berikutnya
+                // Mode auto: abaikan error jaringan sesaat
                 if (!isAuto) showError(error.message);
             } finally {
                 isFetching = false;
             }
         }
 
-        // ✅ Update tampilan jam terakhir pembaruan
-        function updateLastUpdate() {
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            lastUpdateEl.textContent = `${hh}:${mm}:${ss}`;
-        }
-
-        // ✅ TIMER AUTO-REFRESH dengan hitung mundur
+        // ✅ TIMER AUTO-REFRESH - sederhana, tanpa hitung mundur
         function startAutoRefresh() {
-            nextUpdateEl.textContent = countdown;
             setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    countdown = AUTO_REFRESH_SECONDS;
-                    // Lewati pembaruan jika tab/browser tidak aktif (hemat resource)
-                    if (!document.hidden) {
-                        fetchAllData('auto');
-                    }
+                // Lewati pembaruan jika tab/browser tidak aktif (hemat resource)
+                if (!document.hidden) {
+                    fetchAllData('auto');
                 }
-                nextUpdateEl.textContent = countdown;
-            }, 1000);
+            }, AUTO_REFRESH_SECONDS * 1000);
         }
 
         function processDataHadir(rows) {
@@ -673,7 +631,6 @@
             renderCurrentTab(false);
         }
 
-        // ✅ preserve=true: pertahankan filter & halaman saat auto-refresh
         function renderCurrentTab(preserve = false) {
             const store = dataStore[activeTab];
 
@@ -787,7 +744,6 @@
 
             const totalPages = Math.ceil(store.filtered.length / ROWS_PER_PAGE);
             
-            // ✅ Amankan halaman saat data berubah (auto-refresh)
             if (store.currentPage > totalPages) store.currentPage = 1;
 
             const startIndex = (store.currentPage - 1) * ROWS_PER_PAGE;
