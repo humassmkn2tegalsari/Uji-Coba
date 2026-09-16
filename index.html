@@ -26,6 +26,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ✅ Library Excel dengan dukungan styling sel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
         .font-modern { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-times { font-family: "Times New Roman", Times, serif; }
@@ -300,6 +302,17 @@
                                 Reset Filter
                             </button>
                         </div>
+                        <!-- ✅ Tombol Unduh Excel (hanya tampil di tab Rekap) -->
+                        <div id="download-excel-container" class="hidden flex items-end">
+                            <button onclick="downloadExcel()" class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold text-xs uppercase tracking-wider hover:bg-emerald-700 transition active:scale-95 flex items-center justify-center gap-2 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Unduh Excel
+                            </button>
+                        </div>
                     </div>
                     <p id="filter-result" class="mt-3 text-xs text-gray-500 font-medium"></p>
                 </div>
@@ -307,7 +320,6 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse font-modern">
                         <thead id="table-head-wrapper" class="bg-gray-50 border-b border-gray-200">
-                            <!-- Baris header dibangun oleh JavaScript -->
                         </thead>
                         <tbody id="table-body" class="divide-y divide-gray-100"></tbody>
                     </table>
@@ -340,35 +352,19 @@
         const SHEET_CSV_URL_REKAP = 'https://docs.google.com/spreadsheets/d/1OVh5NsmAsfxDbmoTWOuqXpCzgq7f7QJ_ZNS4t6eCJv0/gviz/tq?tqx=out:csv&gid=1464425488';
 
         const COLUMN_CONFIG_HADIR = {
-            nama: 8,
-            kelas: 9,
-            jurusan: 10,
-            waktu: 11,
-            koordinat: 12,
-            jarak: 13
+            nama: 8, kelas: 9, jurusan: 10,
+            waktu: 11, koordinat: 12, jarak: 13
         };
 
         const COLUMN_CONFIG_IZIN = {
-            nama: 1,
-            kelas: 2,
-            jurusan: 3,
-            waktu: 4,
-            jenis_izin: 7,
-            keterangan: 8
+            nama: 1, kelas: 2, jurusan: 3,
+            waktu: 4, jenis_izin: 7, keterangan: 8
         };
 
-        // ✅ KONFIGURASI KOLOM REKAP - sesuai struktur sheet Rekap:
-        // A=No, B=Nama, C=Kelas, D=Konsentrasi Keahlian, E=Presensi Masuk,
-        // F=Izin, G=Sakit, H=Force Majeure, I=Keterangan
         const COLUMN_CONFIG_REKAP = {
-            nama: 1,
-            kelas: 2,
-            jurusan: 3,      // Konsentrasi Keahlian
-            presensi: 4,     // Presensi Masuk
-            izin: 5,
-            sakit: 6,
-            force: 7,        // Force Majeure
-            keterangan: 8
+            nama: 1, kelas: 2, jurusan: 3,
+            presensi: 4, izin: 5, sakit: 6,
+            force: 7, keterangan: 8
         };
 
         const ROWS_PER_PAGE = 20;
@@ -404,19 +400,9 @@
         let activeTab = 'hadir';
         
         const dataStore = {
-            hadir: {
-                all: [], filtered: [], currentPage: 1,
-                availableKelas: [], availableJurusan: []
-            },
-            izin: {
-                all: [], filtered: [], currentPage: 1,
-                availableKelas: [], availableJurusan: [], availableJenis: []
-            },
-            rekap: {
-                all: [], filtered: [], currentPage: 1,
-                availableKelas: [], availableJurusan: [],
-                periode: ''   // ✅ Periode rekap dari sheet
-            }
+            hadir: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [] },
+            izin: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [], availableJenis: [] },
+            rekap: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [], periode: '' }
         };
 
         filterNama.addEventListener('input', debounce(applyFilters, 300));
@@ -435,12 +421,10 @@
         async function fetchCSV(url) {
             const response = await fetch(`${url}${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch');
-            
             const csvText = await response.text();
             if (csvText.includes('<!DOCTYPE html>') || csvText.includes('login')) {
                 throw new Error('Akses Dibatasi (Publish to Web diperlukan)');
             }
-            
             return parseCSV(csvText);
         }
 
@@ -449,84 +433,47 @@
             let row = [];
             let field = '';
             let inQuotes = false;
-
             for (let i = 0; i < text.length; i++) {
                 const c = text.charAt(i);
-
                 if (inQuotes) {
                     if (c === '"') {
-                        if (text.charAt(i + 1) === '"') {
-                            field += '"';
-                            i++;
-                        } else {
-                            inQuotes = false;
-                        }
-                    } else {
-                        field += c;
-                    }
+                        if (text.charAt(i + 1) === '"') { field += '"'; i++; }
+                        else { inQuotes = false; }
+                    } else { field += c; }
                 } else {
-                    if (c === '"') {
-                        inQuotes = true;
-                    } else if (c === ',') {
-                        row.push(field);
-                        field = '';
-                    } else if (c === '\n') {
-                        row.push(field);
-                        rows.push(row);
-                        row = [];
-                        field = '';
-                    } else if (c === '\r') {
-                        // abaikan
-                    } else {
-                        field += c;
-                    }
+                    if (c === '"') inQuotes = true;
+                    else if (c === ',') { row.push(field); field = ''; }
+                    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                    else if (c === '\r') {}
+                    else field += c;
                 }
             }
-
             row.push(field);
             rows.push(row);
-
             return rows;
         }
 
         function cleanCellValue(value) {
             if (!value) return '';
-            return value
-                .replace(/^"(.*)"$/, '$1')
-                .replace(/[\n\r]+/g, ' ')
-                .trim();
+            return value.replace(/^"(.*)"$/, '$1').replace(/[\n\r]+/g, ' ').trim();
         }
 
         async function fetchAllData() {
             loadingState.classList.remove('hidden');
             errorState.classList.add('hidden');
             dataContainer.classList.add('hidden');
-
             try {
                 const [resultHadir, resultIzin, resultRekap] = await Promise.allSettled([
                     fetchCSV(SHEET_CSV_URL_HADIR),
                     fetchCSV(SHEET_CSV_URL_IZIN),
                     fetchCSV(SHEET_CSV_URL_REKAP)
                 ]);
-
-                if (resultHadir.status === 'fulfilled') {
-                    processDataHadir(resultHadir.value);
-                } else {
-                    dataStore.hadir.all = [];
-                }
-
-                if (resultIzin.status === 'fulfilled') {
-                    processDataIzin(resultIzin.value);
-                } else {
-                    dataStore.izin.all = [];
-                }
-
-                if (resultRekap.status === 'fulfilled') {
-                    processDataRekap(resultRekap.value);
-                } else {
-                    console.warn('Data rekap gagal dimuat:', resultRekap.reason);
-                    dataStore.rekap.all = [];
-                }
+                if (resultHadir.status === 'fulfilled') processDataHadir(resultHadir.value);
+                else dataStore.hadir.all = [];
+                if (resultIzin.status === 'fulfilled') processDataIzin(resultIzin.value);
+                else dataStore.izin.all = [];
+                if (resultRekap.status === 'fulfilled') processDataRekap(resultRekap.value);
+                else dataStore.rekap.all = [];
 
                 badgeHadir.textContent = dataStore.hadir.all.length;
                 badgeIzin.textContent = dataStore.izin.all.length;
@@ -536,11 +483,9 @@
                     showError('Tidak ada data yang tersedia.');
                     return;
                 }
-
                 renderCurrentTab();
                 loadingState.classList.add('hidden');
                 dataContainer.classList.remove('hidden');
-
             } catch (error) {
                 showError(error.message);
             }
@@ -548,16 +493,12 @@
 
         function processDataHadir(rows) {
             dataStore.hadir.all = [];
-            const kelasSet = new Set();
-            const jurusanSet = new Set();
-
+            const kelasSet = new Set(); const jurusanSet = new Set();
             for (let i = 4; i < rows.length; i++) {
                 if (!rows[i] || rows[i].join('').trim() === "") continue;
-                
                 const row = rows[i];
                 const namaCell = cleanCellValue(row[COLUMN_CONFIG_HADIR.nama]);
                 if (!namaCell || namaCell === '""') continue;
-                
                 const data = {
                     nama: namaCell,
                     kelas: cleanCellValue(row[COLUMN_CONFIG_HADIR.kelas]),
@@ -566,29 +507,22 @@
                     koordinat: cleanCellValue(row[COLUMN_CONFIG_HADIR.koordinat]),
                     jarak: cleanCellValue(row[COLUMN_CONFIG_HADIR.jarak])
                 };
-
                 dataStore.hadir.all.push(data);
                 if (data.kelas) kelasSet.add(data.kelas);
                 if (data.jurusan) jurusanSet.add(data.jurusan);
             }
-
             dataStore.hadir.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
             dataStore.hadir.availableJurusan = Array.from(jurusanSet).sort();
         }
 
         function processDataIzin(rows) {
             dataStore.izin.all = [];
-            const kelasSet = new Set();
-            const jurusanSet = new Set();
-            const jenisSet = new Set();
-
+            const kelasSet = new Set(); const jurusanSet = new Set(); const jenisSet = new Set();
             for (let i = 4; i < rows.length; i++) {
                 if (!rows[i] || rows[i].join('').trim() === "") continue;
-                
                 const row = rows[i];
                 const namaCell = cleanCellValue(row[COLUMN_CONFIG_IZIN.nama]);
                 if (!namaCell || namaCell === '""') continue;
-                
                 const data = {
                     nama: namaCell,
                     kelas: cleanCellValue(row[COLUMN_CONFIG_IZIN.kelas]),
@@ -597,39 +531,29 @@
                     jenis_izin: cleanCellValue(row[COLUMN_CONFIG_IZIN.jenis_izin]),
                     keterangan: cleanCellValue(row[COLUMN_CONFIG_IZIN.keterangan])
                 };
-
                 dataStore.izin.all.push(data);
                 if (data.kelas) kelasSet.add(data.kelas);
                 if (data.jurusan) jurusanSet.add(data.jurusan);
                 if (data.jenis_izin) jenisSet.add(data.jenis_izin);
             }
-
             dataStore.izin.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
             dataStore.izin.availableJurusan = Array.from(jurusanSet).sort();
             dataStore.izin.availableJenis = Array.from(jenisSet).sort();
         }
 
-        // ✅ PROSES DATA REKAP - deteksi header cerdas + ambil periode
         function processDataRekap(rows) {
             const rekap = dataStore.rekap;
-            rekap.all = [];
-            rekap.periode = '';
-            const kelasSet = new Set();
-            const jurusanSet = new Set();
-
-            // 1) Cari baris header: baris yang memiliki sel berisi kata "Nama"
+            rekap.all = []; rekap.periode = '';
+            const kelasSet = new Set(); const jurusanSet = new Set();
             let headerIndex = -1;
             for (let i = 0; i < Math.min(rows.length, 15); i++) {
                 if (!rows[i]) continue;
-                const found = rows[i].some(c => cleanCellValue(c).toLowerCase() === 'nama');
-                if (found) {
-                    headerIndex = i;
-                    break;
+                if (rows[i].some(c => cleanCellValue(c).toLowerCase() === 'nama')) {
+                    headerIndex = i; break;
                 }
             }
-            if (headerIndex === -1) headerIndex = 1; // fallback aman
+            if (headerIndex === -1) headerIndex = 1;
 
-            // 2) Ambil info Periode (sel bertuliskan "Periode:" -> nilai di sel berikutnya)
             for (let i = 0; i <= headerIndex; i++) {
                 if (!rows[i]) continue;
                 for (let j = 0; j < rows[i].length; j++) {
@@ -643,14 +567,11 @@
                 if (rekap.periode) break;
             }
 
-            // 3) Proses data mulai baris setelah header
             for (let i = headerIndex + 1; i < rows.length; i++) {
                 if (!rows[i] || rows[i].join('').trim() === "") continue;
-                
                 const row = rows[i];
                 const namaCell = cleanCellValue(row[COLUMN_CONFIG_REKAP.nama]);
                 if (!namaCell || namaCell === '""') continue;
-                
                 const data = {
                     nama: namaCell,
                     kelas: cleanCellValue(row[COLUMN_CONFIG_REKAP.kelas]),
@@ -661,39 +582,35 @@
                     force: cleanCellValue(row[COLUMN_CONFIG_REKAP.force]),
                     keterangan: cleanCellValue(row[COLUMN_CONFIG_REKAP.keterangan])
                 };
-
                 rekap.all.push(data);
                 if (data.kelas) kelasSet.add(data.kelas);
                 if (data.jurusan) jurusanSet.add(data.jurusan);
             }
-
             rekap.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
             rekap.availableJurusan = Array.from(jurusanSet).sort();
         }
 
         function switchTab(tab) {
             if (tab === activeTab) return;
-            
             activeTab = tab;
             const isIzin = (tab === 'izin');
             const isRekap = (tab === 'rekap');
-            
+
             document.getElementById('tab-hadir').classList.toggle('active', tab === 'hadir');
             document.getElementById('tab-izin').classList.toggle('active', tab === 'izin');
             document.getElementById('tab-rekap').classList.toggle('active', tab === 'rekap');
-            
-            if (isRekap) {
-                reportTitle.innerHTML = 'REKAPITULASI PRESENSI<br>SMK NEGERI 2 TEGALSARI';
-            } else if (isIzin) {
-                reportTitle.innerHTML = 'DAFTAR IZIN E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
-            } else {
-                reportTitle.innerHTML = 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
-            }
+
+            if (isRekap) reportTitle.innerHTML = 'REKAPITULASI PRESENSI<br>SMK NEGERI 2 TEGALSARI';
+            else if (isIzin) reportTitle.innerHTML = 'DAFTAR IZIN E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
+            else reportTitle.innerHTML = 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
 
             document.getElementById('filter-jenis-container').classList.toggle('hidden', !isIzin);
+            // ✅ Tombol Unduh Excel hanya muncul di tab Rekap
+            document.getElementById('download-excel-container').classList.toggle('hidden', !isRekap);
 
-            filterGrid.classList.toggle('lg:grid-cols-4', !isIzin);
-            filterGrid.classList.toggle('lg:grid-cols-5', isIzin);
+            // Layout grid: Hadir=4, Izin=5, Rekap=5
+            filterGrid.classList.remove('lg:grid-cols-4', 'lg:grid-cols-5');
+            filterGrid.classList.add(isIzin || isRekap ? 'lg:grid-cols-5' : 'lg:grid-cols-4');
 
             resetFilters(true);
             renderCurrentTab();
@@ -701,14 +618,9 @@
 
         function renderCurrentTab() {
             const store = dataStore[activeTab];
-            
             populateDropdown(filterKelas, store.availableKelas, 'Semua Kelas');
             populateDropdown(filterJurusan, store.availableJurusan, 'Semua Jurusan');
-            
-            if (activeTab === 'izin') {
-                populateDropdown(filterJenis, store.availableJenis, 'Semua Jenis');
-            }
-
+            if (activeTab === 'izin') populateDropdown(filterJenis, store.availableJenis, 'Semua Jenis');
             applyFilters();
         }
 
@@ -716,8 +628,7 @@
             selectElement.innerHTML = `<option value="">${defaultText}</option>`;
             optionsList.forEach(opt => {
                 const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = opt;
+                option.value = opt; option.textContent = opt;
                 selectElement.appendChild(option);
             });
         }
@@ -733,12 +644,10 @@
                 const matchNama = !searchNama || data.nama.toLowerCase().includes(searchNama);
                 const matchKelas = !selectedKelas || data.kelas === selectedKelas;
                 const matchJurusan = !selectedJurusan || data.jurusan === selectedJurusan;
-                
                 if (activeTab === 'izin') {
                     const matchJenis = !selectedJenis || data.jenis_izin === selectedJenis;
                     return matchNama && matchKelas && matchJurusan && matchJenis;
                 }
-                
                 return matchNama && matchKelas && matchJurusan;
             });
 
@@ -753,7 +662,6 @@
                 filterResult.classList.remove('text-blue-600');
                 filterResult.classList.add('text-gray-500');
             }
-            // ✅ Tampilkan periode rekap jika ada
             if (activeTab === 'rekap' && store.periode) {
                 infoText = `Periode: ${store.periode} • ${infoText}`;
             }
@@ -776,14 +684,9 @@
         function renderTable() {
             tableHeadWrapper.innerHTML = '';
             tableBody.innerHTML = '';
-            
             const store = dataStore[activeTab];
 
-            // ✅ BANGUN HEADER SESUAI TAB
             if (activeTab === 'rekap') {
-                // Header bertingkat seperti struktur sheet:
-                // Baris 1: No | Nama | Kelas | Konsentrasi Keahlian | Presensi Masuk | Jenis Izin (colspan 3) | Keterangan
-                // Baris 2: Izin | Sakit | Force Majeure
                 const tr1 = document.createElement('tr');
                 [
                     { text: 'No', rowspan: 2 },
@@ -802,12 +705,10 @@
                     tr1.appendChild(th);
                 });
                 tableHeadWrapper.appendChild(tr1);
-
                 const tr2 = document.createElement('tr');
                 ['I', 'S', 'FM'].forEach(text => {
                     const th = document.createElement('th');
-                    th.className = TH_CLASS;
-                    th.textContent = text;
+                    th.className = TH_CLASS; th.textContent = text;
                     tr2.appendChild(th);
                 });
                 tableHeadWrapper.appendChild(tr2);
@@ -818,8 +719,7 @@
                 const tr = document.createElement('tr');
                 manualHeaders.forEach(headerText => {
                     const th = document.createElement('th');
-                    th.className = TH_CLASS;
-                    th.textContent = headerText;
+                    th.className = TH_CLASS; th.textContent = headerText;
                     tr.appendChild(th);
                 });
                 tableHeadWrapper.appendChild(tr);
@@ -840,60 +740,48 @@
             pageRows.forEach((data, index) => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-blue-50/30 transition-colors';
-                
+
                 const tdNo = document.createElement('td');
                 tdNo.className = 'px-4 py-4 text-sm font-medium text-gray-400 text-center w-12';
                 tdNo.textContent = startIndex + index + 1;
                 tr.appendChild(tdNo);
 
                 if (activeTab === 'hadir') {
-                    // === TAB HADIR ===
                     const tdNama = document.createElement('td');
                     tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
-                    tdNama.textContent = data.nama;
-                    tr.appendChild(tdNama);
+                    tdNama.textContent = data.nama; tr.appendChild(tdNama);
 
                     const tdKelas = document.createElement('td');
                     tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdKelas.textContent = data.kelas;
-                    tr.appendChild(tdKelas);
+                    tdKelas.textContent = data.kelas; tr.appendChild(tdKelas);
 
                     const tdJurusan = document.createElement('td');
                     tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJurusan.textContent = data.jurusan;
-                    tr.appendChild(tdJurusan);
+                    tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan);
 
                     const tdWaktu = document.createElement('td');
                     tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdWaktu.textContent = data.waktu;
-                    tr.appendChild(tdWaktu);
+                    tdWaktu.textContent = data.waktu; tr.appendChild(tdWaktu);
 
                     const tdKoordinat = document.createElement('td');
                     tdKoordinat.className = 'px-4 py-4 text-xs text-left text-gray-500 whitespace-nowrap';
-                    tdKoordinat.textContent = data.koordinat;
-                    tr.appendChild(tdKoordinat);
+                    tdKoordinat.textContent = data.koordinat; tr.appendChild(tdKoordinat);
 
                     const tdJarak = document.createElement('td');
                     tdJarak.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJarak.textContent = data.jarak;
-                    tr.appendChild(tdJarak);
-
+                    tdJarak.textContent = data.jarak; tr.appendChild(tdJarak);
                 } else if (activeTab === 'izin') {
-                    // === TAB IZIN ===
                     const tdNama = document.createElement('td');
                     tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
-                    tdNama.textContent = data.nama;
-                    tr.appendChild(tdNama);
+                    tdNama.textContent = data.nama; tr.appendChild(tdNama);
 
                     const tdKelas = document.createElement('td');
                     tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdKelas.textContent = data.kelas;
-                    tr.appendChild(tdKelas);
+                    tdKelas.textContent = data.kelas; tr.appendChild(tdKelas);
 
                     const tdJurusan = document.createElement('td');
                     tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJurusan.textContent = data.jurusan;
-                    tr.appendChild(tdJurusan);
+                    tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan);
 
                     const tdJenis = document.createElement('td');
                     tdJenis.className = 'px-4 py-4 text-center whitespace-nowrap';
@@ -906,71 +794,51 @@
                     else if (jenis.includes('alpa')) badgeClass = 'bg-red-100 text-red-700';
                     badge.className = `inline-block px-3 py-1 text-xs font-semibold rounded-full ${badgeClass}`;
                     badge.textContent = data.jenis_izin;
-                    tdJenis.appendChild(badge);
-                    tr.appendChild(tdJenis);
+                    tdJenis.appendChild(badge); tr.appendChild(tdJenis);
 
                     const tdKet = document.createElement('td');
                     tdKet.className = 'px-4 py-4 text-sm text-left text-gray-600 min-w-[200px]';
-                    tdKet.textContent = data.keterangan || '-';
-                    tr.appendChild(tdKet);
+                    tdKet.textContent = data.keterangan || '-'; tr.appendChild(tdKet);
 
                     const tdWaktu = document.createElement('td');
                     tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdWaktu.textContent = data.waktu;
-                    tr.appendChild(tdWaktu);
-
+                    tdWaktu.textContent = data.waktu; tr.appendChild(tdWaktu);
                 } else {
-                    // === TAB REKAP (struktur sesuai sheet) ===
                     const tdNama = document.createElement('td');
                     tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
-                    tdNama.textContent = data.nama;
-                    tr.appendChild(tdNama);
+                    tdNama.textContent = data.nama; tr.appendChild(tdNama);
 
                     const tdKelas = document.createElement('td');
                     tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdKelas.textContent = data.kelas;
-                    tr.appendChild(tdKelas);
+                    tdKelas.textContent = data.kelas; tr.appendChild(tdKelas);
 
-                    // Konsentrasi Keahlian
                     const tdJurusan = document.createElement('td');
                     tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJurusan.textContent = data.jurusan;
-                    tr.appendChild(tdJurusan);
+                    tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan);
 
-                    // Presensi Masuk (hijau tebal)
                     const tdPresensi = document.createElement('td');
                     tdPresensi.className = 'px-4 py-4 text-sm text-center font-bold text-green-700 whitespace-nowrap';
-                    tdPresensi.textContent = data.presensi || '0';
-                    tr.appendChild(tdPresensi);
+                    tdPresensi.textContent = data.presensi || '0'; tr.appendChild(tdPresensi);
 
-                    // Izin
                     const tdIzin = document.createElement('td');
                     const vIzin = parseFloat(data.izin) || 0;
                     tdIzin.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${vIzin > 0 ? 'text-blue-600' : 'text-gray-400'}`;
-                    tdIzin.textContent = data.izin || '0';
-                    tr.appendChild(tdIzin);
+                    tdIzin.textContent = data.izin || '0'; tr.appendChild(tdIzin);
 
-                    // Sakit
                     const tdSakit = document.createElement('td');
                     const vSakit = parseFloat(data.sakit) || 0;
                     tdSakit.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${vSakit > 0 ? 'text-orange-600' : 'text-gray-400'}`;
-                    tdSakit.textContent = data.sakit || '0';
-                    tr.appendChild(tdSakit);
+                    tdSakit.textContent = data.sakit || '0'; tr.appendChild(tdSakit);
 
-                    // Force Majeure
                     const tdForce = document.createElement('td');
                     const vForce = parseFloat(data.force) || 0;
                     tdForce.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${vForce > 0 ? 'text-purple-600' : 'text-gray-400'}`;
-                    tdForce.textContent = data.force || '0';
-                    tr.appendChild(tdForce);
+                    tdForce.textContent = data.force || '0'; tr.appendChild(tdForce);
 
-                    // Keterangan
                     const tdKet = document.createElement('td');
                     tdKet.className = 'px-4 py-4 text-sm text-left text-gray-600 min-w-[150px]';
-                    tdKet.textContent = data.keterangan || '-';
-                    tr.appendChild(tdKet);
+                    tdKet.textContent = data.keterangan || '-'; tr.appendChild(tdKet);
                 }
-                
                 tableBody.appendChild(tr);
             });
 
@@ -984,7 +852,6 @@
             paginationInfo.innerHTML = `Menampilkan <span class="font-semibold text-gray-700">${startIndex}-${endIndex}</span> dari <span class="font-semibold text-gray-700">${store.filtered.length}</span> data`;
 
             paginationButtons.innerHTML = '';
-
             if (totalPages <= 1) {
                 document.getElementById('pagination-container').classList.add('hidden');
                 return;
@@ -1003,8 +870,7 @@
                 const btn = document.createElement('button');
                 if (p === '...') {
                     btn.className = 'pagination-btn cursor-default';
-                    btn.textContent = '...';
-                    btn.disabled = true;
+                    btn.textContent = '...'; btn.disabled = true;
                 } else {
                     btn.className = 'pagination-btn';
                     if (p === store.currentPage) btn.classList.add('active');
@@ -1023,17 +889,11 @@
         }
 
         function getPageNumbers(current, total) {
-            if (total <= 7) {
-                return Array.from({ length: total }, (_, i) => i + 1);
-            }
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
             const pages = [];
-            if (current <= 3) {
-                pages.push(1, 2, 3, 4, '...', total);
-            } else if (current >= total - 2) {
-                pages.push(1, '...', total - 3, total - 2, total - 1, total);
-            } else {
-                pages.push(1, '...', current - 1, current, current + 1, '...', total);
-            }
+            if (current <= 3) pages.push(1, 2, 3, 4, '...', total);
+            else if (current >= total - 2) pages.push(1, '...', total - 3, total - 2, total - 1, total);
+            else pages.push(1, '...', current - 1, current, current + 1, '...', total);
             return pages;
         }
 
@@ -1048,6 +908,211 @@
             errorState.classList.remove('hidden');
             dataContainer.classList.add('hidden');
             errorMessage.textContent = msg;
+        }
+
+        // ================================================
+        // ✅ FUNGSI UNDUH EXCEL - File XLSX Siap Cetak A4
+        // ================================================
+        function downloadExcel() {
+            if (typeof XLSX === 'undefined') {
+                alert('Library Excel belum termuat. Silakan refresh halaman dan coba lagi.');
+                return;
+            }
+
+            const store = dataStore.rekap;
+            if (!store.filtered || store.filtered.length === 0) {
+                alert('Tidak ada data rekapitulasi untuk diunduh.');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const wsData = [];
+            const merges = [];
+
+            // ===== KOP SURAT (Times New Roman, formal) =====
+            // Row 0: spacer
+            wsData.push(['', '', '', '', '', '', '', '', '']);
+            // Row 1: PEMERINTAH PROVINSI JAWA TIMUR (merge B1:I1)
+            wsData.push(['', 'PEMERINTAH PROVINSI JAWA TIMUR', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 1, c: 1 }, e: { r: 1, c: 8 } });
+            // Row 2: DINAS PENDIDIKAN
+            wsData.push(['', 'DINAS PENDIDIKAN', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 2, c: 1 }, e: { r: 2, c: 8 } });
+            // Row 3: NAMA SEKOLAH (bold besar)
+            wsData.push(['', 'SEKOLAH MENENGAH KEJURUAN NEGERI 2 TEGALSARI', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 3, c: 1 }, e: { r: 3, c: 8 } });
+            // Row 4: Alamat
+            wsData.push(['', 'Jalan KH. Achmad Musayyidi Nomor 2 Karangdoro, Tegalsari, Banyuwangi, 68491', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 4, c: 1 }, e: { r: 4, c: 8 } });
+            // Row 5: Telepon + Email (dengan border bawah double untuk garis kop)
+            wsData.push(['', 'Telepon 0812 1682 9150  •  Pos-el smknegeri2tegalsari@gmail.com', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 5, c: 1 }, e: { r: 5, c: 8 } });
+            // Row 6: spacer (garis kop sudah ada di border bawah row 5)
+            wsData.push(['', '', '', '', '', '', '', '', '']);
+            // Row 7: spacer
+            wsData.push([]);
+
+            // ===== JUDUL LAPORAN =====
+            wsData.push(['', 'REKAPITULASI PRESENSI SISWA', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 8, c: 1 }, e: { r: 8, c: 8 } });
+            wsData.push(['', 'SMK NEGERI 2 TEGALSARI', '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 9, c: 1 }, e: { r: 9, c: 8 } });
+            const periodeText = store.periode ? `Periode: ${store.periode}` : '';
+            wsData.push(['', periodeText, '', '', '', '', '', '', '']);
+            merges.push({ s: { r: 10, c: 1 }, e: { r: 10, c: 8 } });
+            // Row 11: spacer
+            wsData.push([]);
+
+            // ===== HEADER TABEL BERDINGKAT =====
+            const headerRow1 = 12;
+            wsData.push(['No', 'Nama', 'Kelas', 'Jurusan', 'Presensi Masuk', 'Jenis Izin', '', '', 'Ket']);
+            wsData.push(['', '', '', '', '', 'I', 'S', 'FM', '']);
+
+            // Rowspan 2 untuk: No, Nama, Kelas, Jurusan, Presensi, Ket (kolom 0,1,2,3,4,8)
+            [0, 1, 2, 3, 4, 8].forEach(c => {
+                merges.push({ s: { r: headerRow1, c: c }, e: { r: headerRow1 + 1, c: c } });
+            });
+            // Colspan 3 untuk "Jenis Izin" (kolom 5,6,7 di baris headerRow1)
+            merges.push({ s: { r: headerRow1, c: 5 }, e: { r: headerRow1, c: 7 } });
+
+            // ===== DATA BARIS =====
+            const dataStartRow = 14;
+            store.filtered.forEach((d, i) => {
+                wsData.push([
+                    i + 1,
+                    d.nama || '',
+                    d.kelas || '',
+                    d.jurusan || '',
+                    parseFloat(d.presensi) || 0,
+                    parseFloat(d.izin) || 0,
+                    parseFloat(d.sakit) || 0,
+                    parseFloat(d.force) || 0,
+                    d.keterangan || '-'
+                ]);
+            });
+
+            // ===== BUILD WORKSHEET =====
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            ws['!merges'] = merges;
+
+            // ===== STYLING DEFINITIONS =====
+            const fontKopProv = { name: 'Times New Roman', sz: 12, bold: true };
+            const fontKopSekolah = { name: 'Times New Roman', sz: 16, bold: true };
+            const fontKopAlamat = { name: 'Times New Roman', sz: 10, italic: true };
+            const fontJudul = { name: 'Plus Jakarta Sans', sz: 13, bold: true };
+            const fontPeriode = { name: 'Plus Jakarta Sans', sz: 10, italic: true };
+            const fontHeader = { name: 'Plus Jakarta Sans', sz: 10, bold: true };
+            const fontData = { name: 'Plus Jakarta Sans', sz: 10 };
+
+            const alignCenter = { horizontal: 'center', vertical: 'center', wrapText: true };
+            const alignLeft = { horizontal: 'left', vertical: 'center', wrapText: true };
+
+            const borderThin = {
+                top: { style: 'thin', color: { rgb: '374151' } },
+                bottom: { style: 'thin', color: { rgb: '374151' } },
+                left: { style: 'thin', color: { rgb: '374151' } },
+                right: { style: 'thin', color: { rgb: '374151' } }
+            };
+            const borderKop = {
+                top: { style: 'medium', color: { rgb: '000000' } },
+                bottom: { style: 'double', color: { rgb: '000000' } }
+            };
+            const headerFill = { fgColor: { rgb: 'F3F4F6' } };
+
+            // ===== APPLY STYLING PER CELL =====
+            for (let r = 0; r < wsData.length; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                    if (!ws[cellRef]) ws[cellRef] = { v: '', t: 's' };
+
+                    // Kop surat (row 0-5)
+                    if (r <= 5) {
+                        if (c === 0) {
+                            // Kolom A dibiarkan kosong untuk margin logo
+                            ws[cellRef].s = { font: { name: 'Times New Roman', sz: 10 } };
+                        } else {
+                            let f = fontKopProv;
+                            if (r === 3) f = fontKopSekolah;
+                            else if (r === 4 || r === 5) f = fontKopAlamat;
+                            ws[cellRef].s = { font: f, alignment: alignCenter };
+                            if (r === 5) ws[cellRef].s.border = borderKop;
+                        }
+                    }
+                    // Spacer rows
+                    else if (r === 6 || r === 7 || r === 11) {
+                        ws[cellRef].s = { font: fontData };
+                    }
+                    // Judul (row 8-10)
+                    else if (r >= 8 && r <= 10) {
+                        ws[cellRef].s = {
+                            font: r === 10 ? fontPeriode : fontJudul,
+                            alignment: alignCenter
+                        };
+                    }
+                    // Header tabel (row 12-13)
+                    else if (r === headerRow1 || r === headerRow1 + 1) {
+                        ws[cellRef].s = {
+                            font: fontHeader,
+                            alignment: alignCenter,
+                            border: borderThin,
+                            fill: headerFill
+                        };
+                    }
+                    // Data rows
+                    else if (r >= dataStartRow) {
+                        const isTextCol = (c === 1 || c === 8);
+                        ws[cellRef].s = {
+                            font: fontData,
+                            alignment: isTextCol ? alignLeft : alignCenter,
+                            border: borderThin
+                        };
+                    }
+                }
+            }
+
+            // ===== COLUMN WIDTHS =====
+            ws['!cols'] = [
+                { wch: 5 },   // A: No
+                { wch: 38 },  // B: Nama
+                { wch: 12 },  // C: Kelas
+                { wch: 22 },  // D: Jurusan
+                { wch: 10 },  // E: Presensi
+                { wch: 6 },   // F: I
+                { wch: 6 },   // G: S
+                { wch: 6 },   // H: FM
+                { wch: 28 }   // I: Keterangan
+            ];
+
+            // ===== ROW HEIGHTS =====
+            ws['!rows'] = [];
+            ws['!rows'][3] = { hpt: 26 };   // Nama sekolah
+            ws['!rows'][5] = { hpt: 18 };   // Alamat telepon
+            ws['!rows'][8] = { hpt: 22 };   // Judul
+            ws['!rows'][headerRow1] = { hpt: 28 };
+            ws['!rows'][headerRow1 + 1] = { hpt: 22 };
+
+            // ===== PAGE SETUP A4 PORTRAIT =====
+            ws['!pageSetup'] = {
+                paperSize: 9,          // A4
+                orientation: 'portrait',
+                fitToWidth: 1,
+                fitToHeight: 0,
+                horizontalDpi: 96,
+                verticalDpi: 96
+            };
+            ws['!margins'] = {
+                left: 0.5, right: 0.5,
+                top: 0.75, bottom: 0.75,
+                header: 0.3, footer: 0.3
+            };
+            ws['!printArea'] = `A1:I${wsData.length}`;
+
+            // ===== ADD SHEET & WRITE FILE =====
+            XLSX.utils.book_append_sheet(wb, ws, 'Rekapitulasi');
+            const today = new Date();
+            const dateStr = today.toISOString().slice(0, 10);
+            const fileName = `Rekapitulasi_Presensi_${dateStr}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
 
         window.onload = fetchAllData;
