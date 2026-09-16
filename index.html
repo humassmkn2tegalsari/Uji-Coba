@@ -306,8 +306,8 @@
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse font-modern">
-                        <thead>
-                            <tr id="table-head" class="bg-gray-50 border-b border-gray-200"></tr>
+                        <thead id="table-head-wrapper" class="bg-gray-50 border-b border-gray-200">
+                            <!-- Baris header dibangun oleh JavaScript -->
                         </thead>
                         <tbody id="table-body" class="divide-y divide-gray-100"></tbody>
                     </table>
@@ -337,12 +337,7 @@
         const LOGO_URL = 'https://lh3.googleusercontent.com/u/0/d/1H50VHCq-M7qyzYHO-Ftq3QtTfp0Fkgyf';
         const SHEET_CSV_URL_HADIR = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=0&single=true&output=csv';
         const SHEET_CSV_URL_IZIN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=457704213&single=true&output=csv';
-        
-        // ✅ URL Sheet Rekapitulasi - menggunakan format gviz (tidak perlu publish-to-web)
         const SHEET_CSV_URL_REKAP = 'https://docs.google.com/spreadsheets/d/1OVh5NsmAsfxDbmoTWOuqXpCzgq7f7QJ_ZNS4t6eCJv0/gviz/tq?tqx=out:csv&gid=1464425488';
-        
-        // Jika format gviz tidak bisa diakses, gunakan format alternatif ini (harus publish-to-web):
-        // const SHEET_CSV_URL_REKAP = 'https://docs.google.com/spreadsheets/d/e/PUBLISH_ID_ANDA/pub?gid=1464425488&single=true&output=csv';
 
         const COLUMN_CONFIG_HADIR = {
             nama: 8,
@@ -362,14 +357,18 @@
             keterangan: 8
         };
 
-        // ✅ KONFIGURASI REKAPITULASI
-        // Sesuaikan index kolom jika posisi berbeda di sheet Anda
-        // Index default ini mengasumsikan: No(0), Nama(1), Kelas(2), Jurusan(3), ...
+        // ✅ KONFIGURASI KOLOM REKAP - sesuai struktur sheet Rekap:
+        // A=No, B=Nama, C=Kelas, D=Konsentrasi Keahlian, E=Presensi Masuk,
+        // F=Izin, G=Sakit, H=Force Majeure, I=Keterangan
         const COLUMN_CONFIG_REKAP = {
-            nama: 1,     // Kolom nama siswa
-            kelas: 2,    // Kolom kelas
-            jurusan: 3,  // Kolom jurusan
-            headerRow: 3 // Baris keberapa header kolom berada (index dimulai dari 0)
+            nama: 1,
+            kelas: 2,
+            jurusan: 3,      // Konsentrasi Keahlian
+            presensi: 4,     // Presensi Masuk
+            izin: 5,
+            sakit: 6,
+            force: 7,        // Force Majeure
+            keterangan: 8
         };
 
         const ROWS_PER_PAGE = 20;
@@ -377,7 +376,7 @@
         const loadingState = document.getElementById('loading-state');
         const errorState = document.getElementById('error-state');
         const dataContainer = document.getElementById('data-container');
-        const tableHead = document.getElementById('table-head');
+        const tableHeadWrapper = document.getElementById('table-head-wrapper');
         const tableBody = document.getElementById('table-body');
         const dateDisplay = document.getElementById('current-date');
         const errorMessage = document.getElementById('error-message');
@@ -413,12 +412,10 @@
                 all: [], filtered: [], currentPage: 1,
                 availableKelas: [], availableJurusan: [], availableJenis: []
             },
-            // ✅ STORE UNTUK REKAPITULASI
             rekap: {
                 all: [], filtered: [], currentPage: 1,
                 availableKelas: [], availableJurusan: [],
-                headers: [],           // Header kolom dari sheet
-                statColumns: []        // Index kolom yang berisi angka/statistik
+                periode: ''   // ✅ Periode rekap dari sheet
             }
         };
 
@@ -506,7 +503,6 @@
             dataContainer.classList.add('hidden');
 
             try {
-                // ✅ Tambah fetch rekap
                 const [resultHadir, resultIzin, resultRekap] = await Promise.allSettled([
                     fetchCSV(SHEET_CSV_URL_HADIR),
                     fetchCSV(SHEET_CSV_URL_IZIN),
@@ -613,54 +609,58 @@
             dataStore.izin.availableJenis = Array.from(jenisSet).sort();
         }
 
-        // ✅ PROSES DATA REKAPITULASI - dengan auto-detect header
+        // ✅ PROSES DATA REKAP - deteksi header cerdas + ambil periode
         function processDataRekap(rows) {
             const rekap = dataStore.rekap;
             rekap.all = [];
-            rekap.headers = [];
-            rekap.statColumns = [];
+            rekap.periode = '';
             const kelasSet = new Set();
             const jurusanSet = new Set();
 
-            // Cari baris header (yang memiliki cukup kolom non-empty)
-            const headerRowIndex = findHeaderRow(rows);
-            if (headerRowIndex === -1 || !rows[headerRowIndex]) {
-                console.warn('Header rekap tidak ditemukan');
-                return;
-            }
-
-            // Baca header dan deteksi kolom statistik (berisi angka)
-            const headerRow = rows[headerRowIndex];
-            rekap.headers = headerRow.map(h => cleanCellValue(h));
-            
-            // Deteksi kolom statistik dari data pertama
-            const firstDataRow = rows[headerRowIndex + 1];
-            if (firstDataRow) {
-                for (let i = 0; i < rekap.headers.length; i++) {
-                    const cellValue = cleanCellValue(firstDataRow[i]);
-                    // Kolom statistik = berisi angka (bukan nama/kelas/jurusan)
-                    if (cellValue && !isNaN(parseFloat(cellValue.replace(/[,%]/g, ''))) && 
-                        i !== COLUMN_CONFIG_REKAP.nama && 
-                        i !== COLUMN_CONFIG_REKAP.kelas && 
-                        i !== COLUMN_CONFIG_REKAP.jurusan) {
-                        rekap.statColumns.push(i);
-                    }
+            // 1) Cari baris header: baris yang memiliki sel berisi kata "Nama"
+            let headerIndex = -1;
+            for (let i = 0; i < Math.min(rows.length, 15); i++) {
+                if (!rows[i]) continue;
+                const found = rows[i].some(c => cleanCellValue(c).toLowerCase() === 'nama');
+                if (found) {
+                    headerIndex = i;
+                    break;
                 }
             }
+            if (headerIndex === -1) headerIndex = 1; // fallback aman
 
-            // Proses data mulai dari baris setelah header
-            for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            // 2) Ambil info Periode (sel bertuliskan "Periode:" -> nilai di sel berikutnya)
+            for (let i = 0; i <= headerIndex; i++) {
+                if (!rows[i]) continue;
+                for (let j = 0; j < rows[i].length; j++) {
+                    const v = cleanCellValue(rows[i][j]);
+                    if (v.toLowerCase().startsWith('periode')) {
+                        const afterColon = v.split(':').slice(1).join(':').trim();
+                        rekap.periode = afterColon || cleanCellValue(rows[i][j + 1]) || '';
+                        break;
+                    }
+                }
+                if (rekap.periode) break;
+            }
+
+            // 3) Proses data mulai baris setelah header
+            for (let i = headerIndex + 1; i < rows.length; i++) {
                 if (!rows[i] || rows[i].join('').trim() === "") continue;
                 
                 const row = rows[i];
                 const namaCell = cleanCellValue(row[COLUMN_CONFIG_REKAP.nama]);
                 if (!namaCell || namaCell === '""') continue;
                 
-                // Bangun object dengan semua kolom
-                const data = { _raw: row };
-                data.nama = namaCell;
-                data.kelas = cleanCellValue(row[COLUMN_CONFIG_REKAP.kelas]);
-                data.jurusan = cleanCellValue(row[COLUMN_CONFIG_REKAP.jurusan]);
+                const data = {
+                    nama: namaCell,
+                    kelas: cleanCellValue(row[COLUMN_CONFIG_REKAP.kelas]),
+                    jurusan: cleanCellValue(row[COLUMN_CONFIG_REKAP.jurusan]),
+                    presensi: cleanCellValue(row[COLUMN_CONFIG_REKAP.presensi]),
+                    izin: cleanCellValue(row[COLUMN_CONFIG_REKAP.izin]),
+                    sakit: cleanCellValue(row[COLUMN_CONFIG_REKAP.sakit]),
+                    force: cleanCellValue(row[COLUMN_CONFIG_REKAP.force]),
+                    keterangan: cleanCellValue(row[COLUMN_CONFIG_REKAP.keterangan])
+                };
 
                 rekap.all.push(data);
                 if (data.kelas) kelasSet.add(data.kelas);
@@ -669,22 +669,6 @@
 
             rekap.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
             rekap.availableJurusan = Array.from(jurusanSet).sort();
-        }
-
-        // ✅ Cari baris header dengan smart detection
-        function findHeaderRow(rows) {
-            // Coba gunakan konfigurasi dulu
-            const configuredRow = COLUMN_CONFIG_REKAP.headerRow;
-            if (rows[configuredRow] && rows[configuredRow].filter(c => cleanCellValue(c)).length >= 3) {
-                return configuredRow;
-            }
-            // Fallback: cari baris pertama dengan minimal 3 kolom non-empty
-            for (let i = 0; i < Math.min(rows.length, 10); i++) {
-                if (rows[i] && rows[i].filter(c => cleanCellValue(c)).length >= 3) {
-                    return i;
-                }
-            }
-            return 0;
         }
 
         function switchTab(tab) {
@@ -706,12 +690,8 @@
                 reportTitle.innerHTML = 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
             }
 
-            // Tampilkan filter Jenis Izin HANYA di tab izin
             document.getElementById('filter-jenis-container').classList.toggle('hidden', !isIzin);
 
-            // Sesuaikan jumlah kolom grid filter
-            // Tab Hadir & Rekap: 4 kolom (Nama, Kelas, Jurusan, Reset)
-            // Tab Izin: 5 kolom (Nama, Kelas, Jurusan, Jenis Izin, Reset)
             filterGrid.classList.toggle('lg:grid-cols-4', !isIzin);
             filterGrid.classList.toggle('lg:grid-cols-5', isIzin);
 
@@ -763,15 +743,21 @@
             });
 
             const labelData = activeTab === 'hadir' ? 'data presensi' : (activeTab === 'izin' ? 'data izin' : 'data rekap');
+            let infoText;
             if (searchNama || selectedKelas || selectedJurusan || selectedJenis) {
-                filterResult.textContent = `Ditemukan ${store.filtered.length} dari ${store.all.length} ${labelData}`;
+                infoText = `Ditemukan ${store.filtered.length} dari ${store.all.length} ${labelData}`;
                 filterResult.classList.add('text-blue-600');
                 filterResult.classList.remove('text-gray-500');
             } else {
-                filterResult.textContent = `Total ${store.all.length} ${labelData}`;
+                infoText = `Total ${store.all.length} ${labelData}`;
                 filterResult.classList.remove('text-blue-600');
                 filterResult.classList.add('text-gray-500');
             }
+            // ✅ Tampilkan periode rekap jika ada
+            if (activeTab === 'rekap' && store.periode) {
+                infoText = `Periode: ${store.periode} • ${infoText}`;
+            }
+            filterResult.textContent = infoText;
 
             store.currentPage = 1;
             renderTable();
@@ -785,30 +771,59 @@
             if (!silent) applyFilters();
         }
 
+        const TH_CLASS = 'px-4 py-4 text-sm font-extrabold text-gray-700 border-b border-gray-200 uppercase text-center tracking-widest bg-gray-50/50 whitespace-nowrap';
+
         function renderTable() {
-            tableHead.innerHTML = '';
+            tableHeadWrapper.innerHTML = '';
             tableBody.innerHTML = '';
             
             const store = dataStore[activeTab];
 
-            let manualHeaders;
-            if (activeTab === 'hadir') {
-                manualHeaders = ["No", "Nama", "Kelas", "Jurusan", "Waktu", "Koordinat", "Jarak"];
-            } else if (activeTab === 'izin') {
-                manualHeaders = ["No", "Nama", "Kelas", "Jurusan", "Jenis Izin", "Keterangan", "Waktu"];
-            } else {
-                // ✅ REKAP: gunakan header dinamis dari sheet
-                manualHeaders = ["No", ...store.headers.filter(h => h)];
-            }
+            // ✅ BANGUN HEADER SESUAI TAB
+            if (activeTab === 'rekap') {
+                // Header bertingkat seperti struktur sheet:
+                // Baris 1: No | Nama | Kelas | Konsentrasi Keahlian | Presensi Masuk | Jenis Izin (colspan 3) | Keterangan
+                // Baris 2: Izin | Sakit | Force Majeure
+                const tr1 = document.createElement('tr');
+                [
+                    { text: 'No', rowspan: 2 },
+                    { text: 'Nama', rowspan: 2 },
+                    { text: 'Kelas', rowspan: 2 },
+                    { text: 'Konsentrasi Keahlian', rowspan: 2 },
+                    { text: 'Presensi Masuk', rowspan: 2 },
+                    { text: 'Jenis Izin', colspan: 3 },
+                    { text: 'Keterangan', rowspan: 2 }
+                ].forEach(def => {
+                    const th = document.createElement('th');
+                    th.className = TH_CLASS;
+                    th.textContent = def.text;
+                    if (def.rowspan) th.rowSpan = def.rowspan;
+                    if (def.colspan) th.colSpan = def.colspan;
+                    tr1.appendChild(th);
+                });
+                tableHeadWrapper.appendChild(tr1);
 
-            manualHeaders.forEach((headerText, idx) => {
-                const th = document.createElement('th');
-                // Style khusus untuk kolom statistik rekap
-                const isStatCol = activeTab === 'rekap' && idx > 0;
-                th.className = `px-4 py-4 text-sm font-extrabold text-gray-700 border-b border-gray-200 uppercase text-center tracking-widest bg-gray-50/50 whitespace-nowrap`;
-                th.textContent = headerText;
-                tableHead.appendChild(th);
-            });
+                const tr2 = document.createElement('tr');
+                ['Izin', 'Sakit', 'Force Majeure'].forEach(text => {
+                    const th = document.createElement('th');
+                    th.className = TH_CLASS;
+                    th.textContent = text;
+                    tr2.appendChild(th);
+                });
+                tableHeadWrapper.appendChild(tr2);
+            } else {
+                const manualHeaders = (activeTab === 'hadir')
+                    ? ["No", "Nama", "Kelas", "Jurusan", "Waktu", "Koordinat", "Jarak"]
+                    : ["No", "Nama", "Kelas", "Jurusan", "Jenis Izin", "Keterangan", "Waktu"];
+                const tr = document.createElement('tr');
+                manualHeaders.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.className = TH_CLASS;
+                    th.textContent = headerText;
+                    tr.appendChild(th);
+                });
+                tableHeadWrapper.appendChild(tr);
+            }
 
             if (store.filtered.length === 0) {
                 emptyState.classList.add('active');
@@ -905,7 +920,7 @@
                     tr.appendChild(tdWaktu);
 
                 } else {
-                    // === TAB REKAP ===
+                    // === TAB REKAP (struktur sesuai sheet) ===
                     const tdNama = document.createElement('td');
                     tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
                     tdNama.textContent = data.nama;
@@ -916,58 +931,44 @@
                     tdKelas.textContent = data.kelas;
                     tr.appendChild(tdKelas);
 
+                    // Konsentrasi Keahlian
                     const tdJurusan = document.createElement('td');
                     tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
                     tdJurusan.textContent = data.jurusan;
                     tr.appendChild(tdJurusan);
 
-                    // Render kolom-kolom lain dari header dinamis
-                    store.headers.forEach((header, idx) => {
-                        // Skip kolom nama, kelas, jurusan yang sudah di-render
-                        if (idx === COLUMN_CONFIG_REKAP.nama || 
-                            idx === COLUMN_CONFIG_REKAP.kelas || 
-                            idx === COLUMN_CONFIG_REKAP.jurusan) return;
-                        if (!header) return;
-                        
-                        const cellValue = cleanCellValue(data._raw[idx]);
-                        const td = document.createElement('td');
-                        
-                        // Styling khusus untuk kolom statistik (angka)
-                        const isStat = store.statColumns.includes(idx);
-                        if (isStat) {
-                            td.className = 'px-4 py-4 text-sm text-center text-gray-700 font-semibold whitespace-nowrap';
-                            // Badge warna berdasarkan jenis kolom
-                            const headerLower = header.toLowerCase();
-                            if (headerLower.includes('hadir') || headerLower.includes('%') || headerLower.includes('persen')) {
-                                td.className = 'px-4 py-4 text-sm text-center whitespace-nowrap';
-                                const badge = document.createElement('span');
-                                const val = parseFloat(cellValue.replace(/[,%]/g, ''));
-                                let color = 'bg-gray-100 text-gray-700';
-                                if (!isNaN(val)) {
-                                    if (val >= 90) color = 'bg-green-100 text-green-700';
-                                    else if (val >= 75) color = 'bg-blue-100 text-blue-700';
-                                    else if (val >= 50) color = 'bg-yellow-100 text-yellow-700';
-                                    else color = 'bg-red-100 text-red-700';
-                                }
-                                badge.className = `inline-block px-3 py-1 text-xs font-bold rounded-full ${color}`;
-                                badge.textContent = cellValue || '-';
-                                td.appendChild(badge);
-                            } else if (headerLower.includes('sakit') || headerLower.includes('alpa') || headerLower.includes('izin')) {
-                                // Kolom izin/sakit/alpa: warna warning jika > 0
-                                const val = parseFloat(cellValue);
-                                const isWarning = !isNaN(val) && val > 0;
-                                td.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${isWarning ? 'text-orange-600' : 'text-gray-400'}`;
-                                td.textContent = cellValue || '0';
-                            } else {
-                                td.textContent = cellValue || '-';
-                            }
-                        } else {
-                            td.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                            td.textContent = cellValue || '-';
-                        }
-                        
-                        tr.appendChild(td);
-                    });
+                    // Presensi Masuk (hijau tebal)
+                    const tdPresensi = document.createElement('td');
+                    tdPresensi.className = 'px-4 py-4 text-sm text-center font-bold text-green-700 whitespace-nowrap';
+                    tdPresensi.textContent = data.presensi || '0';
+                    tr.appendChild(tdPresensi);
+
+                    // Izin
+                    const tdIzin = document.createElement('td');
+                    const vIzin = parseFloat(data.izin) || 0;
+                    tdIzin.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${vIzin > 0 ? 'text-blue-600' : 'text-gray-400'}`;
+                    tdIzin.textContent = data.izin || '0';
+                    tr.appendChild(tdIzin);
+
+                    // Sakit
+                    const tdSakit = document.createElement('td');
+                    const vSakit = parseFloat(data.sakit) || 0;
+                    tdSakit.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${vSakit > 0 ? 'text-orange-600' : 'text-gray-400'}`;
+                    tdSakit.textContent = data.sakit || '0';
+                    tr.appendChild(tdSakit);
+
+                    // Force Majeure
+                    const tdForce = document.createElement('td');
+                    const vForce = parseFloat(data.force) || 0;
+                    tdForce.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${vForce > 0 ? 'text-purple-600' : 'text-gray-400'}`;
+                    tdForce.textContent = data.force || '0';
+                    tr.appendChild(tdForce);
+
+                    // Keterangan
+                    const tdKet = document.createElement('td');
+                    tdKet.className = 'px-4 py-4 text-sm text-left text-gray-600 min-w-[150px]';
+                    tdKet.textContent = data.keterangan || '-';
+                    tr.appendChild(tdKet);
                 }
                 
                 tableBody.appendChild(tr);
