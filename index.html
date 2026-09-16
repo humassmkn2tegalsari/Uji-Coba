@@ -789,10 +789,10 @@
                     { text: 'No', rowspan: 2 },
                     { text: 'Nama', rowspan: 2 },
                     { text: 'Kelas', rowspan: 2 },
-                    { text: 'Konsentrasi Keahlian', rowspan: 2 },
+                    { text: 'Kon. Keahlian', rowspan: 2 },
                     { text: 'Presensi Masuk', rowspan: 2 },
                     { text: 'Jenis Izin', colspan: 3 },
-                    { text: 'Keterangan', rowspan: 2 }
+                    { text: 'Ket', rowspan: 2 }
                 ].forEach(def => {
                     const th = document.createElement('th');
                     th.className = TH_CLASS;
@@ -804,7 +804,7 @@
                 tableHeadWrapper.appendChild(tr1);
 
                 const tr2 = document.createElement('tr');
-                ['Izin', 'Sakit', 'Force Majeure'].forEach(text => {
+                ['I', 'S', 'FM'].forEach(text => {
                     const th = document.createElement('th');
                     th.className = TH_CLASS;
                     th.textContent = text;
