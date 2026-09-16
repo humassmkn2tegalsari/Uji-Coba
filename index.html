@@ -202,18 +202,6 @@
                 SMK NEGERI 2 TEGALSARI
             </h1>
             <p class="text-12pt text-gray-600 mt-2 font-semibold" id="current-date"></p>
-            
-            <!-- ✅ INDIKATOR LIVE AUTO-REFRESH -->
-            <div class="flex items-center justify-center gap-2 mt-4">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                </span>
-                <p class="text-xs font-medium text-gray-500 tracking-wide">
-                    LIVE &bull; Diperbarui <span id="last-update" class="font-semibold text-gray-700">-</span>
-                    &bull; Berikutnya <span id="next-update" class="font-semibold text-blue-600">60</span>s
-                </p>
-            </div>
         </div>
 
         <div id="app-container" class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200">
@@ -244,6 +232,17 @@
                     <span>Daftar Izin</span>
                     <span id="badge-izin" class="badge">0</span>
                 </button>
+                <button id="tab-rekap" class="tab-btn" onclick="switchTab('rekap')">
+                    <span class="tab-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                    </span>
+                    <span>Rekapitulasi</span>
+                    <span id="badge-rekap" class="badge">0</span>
+                </button>
             </div>
             
             <div id="loading-state" class="flex flex-col items-center justify-center p-24 font-modern italic">
@@ -259,7 +258,7 @@
                 </div>
                 <h2 class="text-2xl font-bold text-gray-400/50 mb-3 tracking-tight">Data presensi hari ini tidak tersedia</h2>
                 <p id="error-message" class="text-gray-300/40 max-w-md leading-relaxed mb-8 text-sm font-medium">Gagal mengambil data dari server.</p>
-                <button onclick="fetchAllData('manual')" class="px-10 py-3.5 bg-gray-900 text-white rounded-lg font-bold hover:bg-black transform transition active:scale-95 shadow-lg shadow-gray-200 uppercase text-xs tracking-widest">
+                <button onclick="fetchAllData()" class="px-10 py-3.5 bg-gray-900 text-white rounded-lg font-bold hover:bg-black transform transition active:scale-95 shadow-lg shadow-gray-200 uppercase text-xs tracking-widest">
                     MUAT ULANG DATA
                 </button>
             </div>
@@ -338,6 +337,12 @@
         const LOGO_URL = 'https://lh3.googleusercontent.com/u/0/d/1H50VHCq-M7qyzYHO-Ftq3QtTfp0Fkgyf';
         const SHEET_CSV_URL_HADIR = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=0&single=true&output=csv';
         const SHEET_CSV_URL_IZIN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=457704213&single=true&output=csv';
+        
+        // ✅ URL Sheet Rekapitulasi - menggunakan format gviz (tidak perlu publish-to-web)
+        const SHEET_CSV_URL_REKAP = 'https://docs.google.com/spreadsheets/d/1OVh5NsmAsfxDbmoTWOuqXpCzgq7f7QJ_ZNS4t6eCJv0/gviz/tq?tqx=out:csv&gid=1464425488';
+        
+        // Jika format gviz tidak bisa diakses, gunakan format alternatif ini (harus publish-to-web):
+        // const SHEET_CSV_URL_REKAP = 'https://docs.google.com/spreadsheets/d/e/PUBLISH_ID_ANDA/pub?gid=1464425488&single=true&output=csv';
 
         const COLUMN_CONFIG_HADIR = {
             nama: 8,
@@ -357,10 +362,17 @@
             keterangan: 8
         };
 
-        const ROWS_PER_PAGE = 20;
+        // ✅ KONFIGURASI REKAPITULASI
+        // Sesuaikan index kolom jika posisi berbeda di sheet Anda
+        // Index default ini mengasumsikan: No(0), Nama(1), Kelas(2), Jurusan(3), ...
+        const COLUMN_CONFIG_REKAP = {
+            nama: 1,     // Kolom nama siswa
+            kelas: 2,    // Kolom kelas
+            jurusan: 3,  // Kolom jurusan
+            headerRow: 3 // Baris keberapa header kolom berada (index dimulai dari 0)
+        };
 
-        // ✅ KONFIGURASI AUTO-REFRESH (dalam detik)
-        const AUTO_REFRESH_SECONDS = 60;
+        const ROWS_PER_PAGE = 20;
 
         const loadingState = document.getElementById('loading-state');
         const errorState = document.getElementById('error-state');
@@ -377,9 +389,8 @@
         const reportTitle = document.getElementById('report-title');
         const badgeHadir = document.getElementById('badge-hadir');
         const badgeIzin = document.getElementById('badge-izin');
+        const badgeRekap = document.getElementById('badge-rekap');
         const filterGrid = document.getElementById('filter-grid');
-        const lastUpdateEl = document.getElementById('last-update');
-        const nextUpdateEl = document.getElementById('next-update');
 
         const filterNama = document.getElementById('filter-nama');
         const filterKelas = document.getElementById('filter-kelas');
@@ -392,8 +403,6 @@
         dateDisplay.innerText = new Date().toLocaleDateString('id-ID', options);
 
         let activeTab = 'hadir';
-        let isFetching = false;              // ✅ Cegah fetch bertumpuk
-        let countdown = AUTO_REFRESH_SECONDS;
         
         const dataStore = {
             hadir: {
@@ -403,6 +412,13 @@
             izin: {
                 all: [], filtered: [], currentPage: 1,
                 availableKelas: [], availableJurusan: [], availableJenis: []
+            },
+            // ✅ STORE UNTUK REKAPITULASI
+            rekap: {
+                all: [], filtered: [], currentPage: 1,
+                availableKelas: [], availableJurusan: [],
+                headers: [],           // Header kolom dari sheet
+                statColumns: []        // Index kolom yang berisi angka/statistik
             }
         };
 
@@ -419,9 +435,8 @@
             };
         }
 
-        // ✅ FUNGSI fetchCSV DENGAN PARSER RFC 4180
         async function fetchCSV(url) {
-            const response = await fetch(`${url}&t=${new Date().getTime()}`, { cache: 'no-store' });
+            const response = await fetch(`${url}${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch');
             
             const csvText = await response.text();
@@ -473,6 +488,7 @@
 
             row.push(field);
             rows.push(row);
+
             return rows;
         }
 
@@ -484,106 +500,54 @@
                 .trim();
         }
 
-        // ✅ FUNGSI FETCH UTAMA - mode: 'manual' | 'auto'
-        async function fetchAllData(mode = 'manual') {
-            const isAuto = (mode === 'auto');
-            
-            // Cegah fetch bertumpuk
-            if (isFetching) return;
-            isFetching = true;
-
-            // Mode auto: silent update (tanpa loading spinner, tanpa flicker)
-            if (!isAuto) {
-                loadingState.classList.remove('hidden');
-                errorState.classList.add('hidden');
-                dataContainer.classList.add('hidden');
-            }
+        async function fetchAllData() {
+            loadingState.classList.remove('hidden');
+            errorState.classList.add('hidden');
+            dataContainer.classList.add('hidden');
 
             try {
-                // Simpan snapshot data lama untuk deteksi perubahan
-                const prevHadir = JSON.stringify(dataStore.hadir.all);
-                const prevIzin = JSON.stringify(dataStore.izin.all);
-
-                const [resultHadir, resultIzin] = await Promise.allSettled([
+                // ✅ Tambah fetch rekap
+                const [resultHadir, resultIzin, resultRekap] = await Promise.allSettled([
                     fetchCSV(SHEET_CSV_URL_HADIR),
-                    fetchCSV(SHEET_CSV_URL_IZIN)
+                    fetchCSV(SHEET_CSV_URL_IZIN),
+                    fetchCSV(SHEET_CSV_URL_REKAP)
                 ]);
 
                 if (resultHadir.status === 'fulfilled') {
                     processDataHadir(resultHadir.value);
-                } else if (!isAuto) {
+                } else {
                     dataStore.hadir.all = [];
                 }
 
                 if (resultIzin.status === 'fulfilled') {
                     processDataIzin(resultIzin.value);
-                } else if (!isAuto) {
+                } else {
                     dataStore.izin.all = [];
+                }
+
+                if (resultRekap.status === 'fulfilled') {
+                    processDataRekap(resultRekap.value);
+                } else {
+                    console.warn('Data rekap gagal dimuat:', resultRekap.reason);
+                    dataStore.rekap.all = [];
                 }
 
                 badgeHadir.textContent = dataStore.hadir.all.length;
                 badgeIzin.textContent = dataStore.izin.all.length;
+                badgeRekap.textContent = dataStore.rekap.all.length;
 
-                const dataChanged = 
-                    JSON.stringify(dataStore.hadir.all) !== prevHadir ||
-                    JSON.stringify(dataStore.izin.all) !== prevIzin;
-
-                if (dataStore.hadir.all.length === 0 && dataStore.izin.all.length === 0) {
-                    if (!isAuto) showError('Tidak ada data yang tersedia.');
+                if (dataStore.hadir.all.length === 0 && dataStore.izin.all.length === 0 && dataStore.rekap.all.length === 0) {
+                    showError('Tidak ada data yang tersedia.');
                     return;
                 }
 
-                // ✅ Update jam "terakhir diperbarui"
-                updateLastUpdate();
-
-                if (isAuto) {
-                    // Pulih dari error jika data kembali tersedia
-                    if (!errorState.classList.contains('hidden')) {
-                        errorState.classList.add('hidden');
-                        loadingState.classList.add('hidden');
-                        dataContainer.classList.remove('hidden');
-                        renderCurrentTab(false);
-                    } else if (dataChanged) {
-                        // Hanya render ulang jika ada data baru (anti-flicker)
-                        renderCurrentTab(true);
-                    }
-                } else {
-                    renderCurrentTab(false);
-                    loadingState.classList.add('hidden');
-                    dataContainer.classList.remove('hidden');
-                }
+                renderCurrentTab();
+                loadingState.classList.add('hidden');
+                dataContainer.classList.remove('hidden');
 
             } catch (error) {
-                // Mode auto: abaikan error jaringan sesaat, coba lagi di interval berikutnya
-                if (!isAuto) showError(error.message);
-            } finally {
-                isFetching = false;
+                showError(error.message);
             }
-        }
-
-        // ✅ Update tampilan jam terakhir pembaruan
-        function updateLastUpdate() {
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            lastUpdateEl.textContent = `${hh}:${mm}:${ss}`;
-        }
-
-        // ✅ TIMER AUTO-REFRESH dengan hitung mundur
-        function startAutoRefresh() {
-            nextUpdateEl.textContent = countdown;
-            setInterval(() => {
-                countdown--;
-                if (countdown <= 0) {
-                    countdown = AUTO_REFRESH_SECONDS;
-                    // Lewati pembaruan jika tab/browser tidak aktif (hemat resource)
-                    if (!document.hidden) {
-                        fetchAllData('auto');
-                    }
-                }
-                nextUpdateEl.textContent = countdown;
-            }, 1000);
         }
 
         function processDataHadir(rows) {
@@ -649,40 +613,115 @@
             dataStore.izin.availableJenis = Array.from(jenisSet).sort();
         }
 
+        // ✅ PROSES DATA REKAPITULASI - dengan auto-detect header
+        function processDataRekap(rows) {
+            const rekap = dataStore.rekap;
+            rekap.all = [];
+            rekap.headers = [];
+            rekap.statColumns = [];
+            const kelasSet = new Set();
+            const jurusanSet = new Set();
+
+            // Cari baris header (yang memiliki cukup kolom non-empty)
+            const headerRowIndex = findHeaderRow(rows);
+            if (headerRowIndex === -1 || !rows[headerRowIndex]) {
+                console.warn('Header rekap tidak ditemukan');
+                return;
+            }
+
+            // Baca header dan deteksi kolom statistik (berisi angka)
+            const headerRow = rows[headerRowIndex];
+            rekap.headers = headerRow.map(h => cleanCellValue(h));
+            
+            // Deteksi kolom statistik dari data pertama
+            const firstDataRow = rows[headerRowIndex + 1];
+            if (firstDataRow) {
+                for (let i = 0; i < rekap.headers.length; i++) {
+                    const cellValue = cleanCellValue(firstDataRow[i]);
+                    // Kolom statistik = berisi angka (bukan nama/kelas/jurusan)
+                    if (cellValue && !isNaN(parseFloat(cellValue.replace(/[,%]/g, ''))) && 
+                        i !== COLUMN_CONFIG_REKAP.nama && 
+                        i !== COLUMN_CONFIG_REKAP.kelas && 
+                        i !== COLUMN_CONFIG_REKAP.jurusan) {
+                        rekap.statColumns.push(i);
+                    }
+                }
+            }
+
+            // Proses data mulai dari baris setelah header
+            for (let i = headerRowIndex + 1; i < rows.length; i++) {
+                if (!rows[i] || rows[i].join('').trim() === "") continue;
+                
+                const row = rows[i];
+                const namaCell = cleanCellValue(row[COLUMN_CONFIG_REKAP.nama]);
+                if (!namaCell || namaCell === '""') continue;
+                
+                // Bangun object dengan semua kolom
+                const data = { _raw: row };
+                data.nama = namaCell;
+                data.kelas = cleanCellValue(row[COLUMN_CONFIG_REKAP.kelas]);
+                data.jurusan = cleanCellValue(row[COLUMN_CONFIG_REKAP.jurusan]);
+
+                rekap.all.push(data);
+                if (data.kelas) kelasSet.add(data.kelas);
+                if (data.jurusan) jurusanSet.add(data.jurusan);
+            }
+
+            rekap.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
+            rekap.availableJurusan = Array.from(jurusanSet).sort();
+        }
+
+        // ✅ Cari baris header dengan smart detection
+        function findHeaderRow(rows) {
+            // Coba gunakan konfigurasi dulu
+            const configuredRow = COLUMN_CONFIG_REKAP.headerRow;
+            if (rows[configuredRow] && rows[configuredRow].filter(c => cleanCellValue(c)).length >= 3) {
+                return configuredRow;
+            }
+            // Fallback: cari baris pertama dengan minimal 3 kolom non-empty
+            for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                if (rows[i] && rows[i].filter(c => cleanCellValue(c)).length >= 3) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
         function switchTab(tab) {
             if (tab === activeTab) return;
             
             activeTab = tab;
             const isIzin = (tab === 'izin');
+            const isRekap = (tab === 'rekap');
             
-            document.getElementById('tab-hadir').classList.toggle('active', !isIzin);
-            document.getElementById('tab-izin').classList.toggle('active', isIzin);
+            document.getElementById('tab-hadir').classList.toggle('active', tab === 'hadir');
+            document.getElementById('tab-izin').classList.toggle('active', tab === 'izin');
+            document.getElementById('tab-rekap').classList.toggle('active', tab === 'rekap');
             
-            if (isIzin) {
+            if (isRekap) {
+                reportTitle.innerHTML = 'REKAPITULASI PRESENSI<br>SMK NEGERI 2 TEGALSARI';
+            } else if (isIzin) {
                 reportTitle.innerHTML = 'DAFTAR IZIN E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
             } else {
                 reportTitle.innerHTML = 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
             }
 
+            // Tampilkan filter Jenis Izin HANYA di tab izin
             document.getElementById('filter-jenis-container').classList.toggle('hidden', !isIzin);
 
+            // Sesuaikan jumlah kolom grid filter
+            // Tab Hadir & Rekap: 4 kolom (Nama, Kelas, Jurusan, Reset)
+            // Tab Izin: 5 kolom (Nama, Kelas, Jurusan, Jenis Izin, Reset)
             filterGrid.classList.toggle('lg:grid-cols-4', !isIzin);
             filterGrid.classList.toggle('lg:grid-cols-5', isIzin);
 
             resetFilters(true);
-            renderCurrentTab(false);
+            renderCurrentTab();
         }
 
-        // ✅ preserve=true: pertahankan filter & halaman saat auto-refresh
-        function renderCurrentTab(preserve = false) {
+        function renderCurrentTab() {
             const store = dataStore[activeTab];
-
-            const prev = {
-                kelas: filterKelas.value,
-                jurusan: filterJurusan.value,
-                jenis: filterJenis.value
-            };
-
+            
             populateDropdown(filterKelas, store.availableKelas, 'Semua Kelas');
             populateDropdown(filterJurusan, store.availableJurusan, 'Semua Jurusan');
             
@@ -690,19 +729,7 @@
                 populateDropdown(filterJenis, store.availableJenis, 'Semua Jenis');
             }
 
-            if (preserve) {
-                restoreSelect(filterKelas, prev.kelas);
-                restoreSelect(filterJurusan, prev.jurusan);
-                if (activeTab === 'izin') restoreSelect(filterJenis, prev.jenis);
-            }
-
-            applyFilters(!preserve);
-        }
-
-        function restoreSelect(selectEl, value) {
-            if (value && Array.from(selectEl.options).some(o => o.value === value)) {
-                selectEl.value = value;
-            }
+            applyFilters();
         }
 
         function populateDropdown(selectElement, optionsList, defaultText) {
@@ -715,7 +742,7 @@
             });
         }
 
-        function applyFilters(resetPage = true) {
+        function applyFilters() {
             const store = dataStore[activeTab];
             const searchNama = filterNama.value.trim().toLowerCase();
             const selectedKelas = filterKelas.value;
@@ -735,7 +762,7 @@
                 return matchNama && matchKelas && matchJurusan;
             });
 
-            const labelData = activeTab === 'hadir' ? 'data presensi' : 'data izin';
+            const labelData = activeTab === 'hadir' ? 'data presensi' : (activeTab === 'izin' ? 'data izin' : 'data rekap');
             if (searchNama || selectedKelas || selectedJurusan || selectedJenis) {
                 filterResult.textContent = `Ditemukan ${store.filtered.length} dari ${store.all.length} ${labelData}`;
                 filterResult.classList.add('text-blue-600');
@@ -746,7 +773,7 @@
                 filterResult.classList.add('text-gray-500');
             }
 
-            if (resetPage) store.currentPage = 1;
+            store.currentPage = 1;
             renderTable();
         }
 
@@ -767,12 +794,17 @@
             let manualHeaders;
             if (activeTab === 'hadir') {
                 manualHeaders = ["No", "Nama", "Kelas", "Jurusan", "Waktu", "Koordinat", "Jarak"];
-            } else {
+            } else if (activeTab === 'izin') {
                 manualHeaders = ["No", "Nama", "Kelas", "Jurusan", "Jenis Izin", "Keterangan", "Waktu"];
+            } else {
+                // ✅ REKAP: gunakan header dinamis dari sheet
+                manualHeaders = ["No", ...store.headers.filter(h => h)];
             }
 
-            manualHeaders.forEach((headerText) => {
+            manualHeaders.forEach((headerText, idx) => {
                 const th = document.createElement('th');
+                // Style khusus untuk kolom statistik rekap
+                const isStatCol = activeTab === 'rekap' && idx > 0;
                 th.className = `px-4 py-4 text-sm font-extrabold text-gray-700 border-b border-gray-200 uppercase text-center tracking-widest bg-gray-50/50 whitespace-nowrap`;
                 th.textContent = headerText;
                 tableHead.appendChild(th);
@@ -786,10 +818,6 @@
             emptyState.classList.remove('active');
 
             const totalPages = Math.ceil(store.filtered.length / ROWS_PER_PAGE);
-            
-            // ✅ Amankan halaman saat data berubah (auto-refresh)
-            if (store.currentPage > totalPages) store.currentPage = 1;
-
             const startIndex = (store.currentPage - 1) * ROWS_PER_PAGE;
             const endIndex = Math.min(startIndex + ROWS_PER_PAGE, store.filtered.length);
             const pageRows = store.filtered.slice(startIndex, endIndex);
@@ -803,12 +831,13 @@
                 tdNo.textContent = startIndex + index + 1;
                 tr.appendChild(tdNo);
 
-                const tdNama = document.createElement('td');
-                tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
-                tdNama.textContent = data.nama;
-                tr.appendChild(tdNama);
-
                 if (activeTab === 'hadir') {
+                    // === TAB HADIR ===
+                    const tdNama = document.createElement('td');
+                    tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
+                    tdNama.textContent = data.nama;
+                    tr.appendChild(tdNama);
+
                     const tdKelas = document.createElement('td');
                     tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
                     tdKelas.textContent = data.kelas;
@@ -833,7 +862,14 @@
                     tdJarak.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
                     tdJarak.textContent = data.jarak;
                     tr.appendChild(tdJarak);
-                } else {
+
+                } else if (activeTab === 'izin') {
+                    // === TAB IZIN ===
+                    const tdNama = document.createElement('td');
+                    tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
+                    tdNama.textContent = data.nama;
+                    tr.appendChild(tdNama);
+
                     const tdKelas = document.createElement('td');
                     tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
                     tdKelas.textContent = data.kelas;
@@ -867,6 +903,71 @@
                     tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
                     tdWaktu.textContent = data.waktu;
                     tr.appendChild(tdWaktu);
+
+                } else {
+                    // === TAB REKAP ===
+                    const tdNama = document.createElement('td');
+                    tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
+                    tdNama.textContent = data.nama;
+                    tr.appendChild(tdNama);
+
+                    const tdKelas = document.createElement('td');
+                    tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
+                    tdKelas.textContent = data.kelas;
+                    tr.appendChild(tdKelas);
+
+                    const tdJurusan = document.createElement('td');
+                    tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
+                    tdJurusan.textContent = data.jurusan;
+                    tr.appendChild(tdJurusan);
+
+                    // Render kolom-kolom lain dari header dinamis
+                    store.headers.forEach((header, idx) => {
+                        // Skip kolom nama, kelas, jurusan yang sudah di-render
+                        if (idx === COLUMN_CONFIG_REKAP.nama || 
+                            idx === COLUMN_CONFIG_REKAP.kelas || 
+                            idx === COLUMN_CONFIG_REKAP.jurusan) return;
+                        if (!header) return;
+                        
+                        const cellValue = cleanCellValue(data._raw[idx]);
+                        const td = document.createElement('td');
+                        
+                        // Styling khusus untuk kolom statistik (angka)
+                        const isStat = store.statColumns.includes(idx);
+                        if (isStat) {
+                            td.className = 'px-4 py-4 text-sm text-center text-gray-700 font-semibold whitespace-nowrap';
+                            // Badge warna berdasarkan jenis kolom
+                            const headerLower = header.toLowerCase();
+                            if (headerLower.includes('hadir') || headerLower.includes('%') || headerLower.includes('persen')) {
+                                td.className = 'px-4 py-4 text-sm text-center whitespace-nowrap';
+                                const badge = document.createElement('span');
+                                const val = parseFloat(cellValue.replace(/[,%]/g, ''));
+                                let color = 'bg-gray-100 text-gray-700';
+                                if (!isNaN(val)) {
+                                    if (val >= 90) color = 'bg-green-100 text-green-700';
+                                    else if (val >= 75) color = 'bg-blue-100 text-blue-700';
+                                    else if (val >= 50) color = 'bg-yellow-100 text-yellow-700';
+                                    else color = 'bg-red-100 text-red-700';
+                                }
+                                badge.className = `inline-block px-3 py-1 text-xs font-bold rounded-full ${color}`;
+                                badge.textContent = cellValue || '-';
+                                td.appendChild(badge);
+                            } else if (headerLower.includes('sakit') || headerLower.includes('alpa') || headerLower.includes('izin')) {
+                                // Kolom izin/sakit/alpa: warna warning jika > 0
+                                const val = parseFloat(cellValue);
+                                const isWarning = !isNaN(val) && val > 0;
+                                td.className = `px-4 py-4 text-sm text-center whitespace-nowrap font-semibold ${isWarning ? 'text-orange-600' : 'text-gray-400'}`;
+                                td.textContent = cellValue || '0';
+                            } else {
+                                td.textContent = cellValue || '-';
+                            }
+                        } else {
+                            td.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
+                            td.textContent = cellValue || '-';
+                        }
+                        
+                        tr.appendChild(td);
+                    });
                 }
                 
                 tableBody.appendChild(tr);
@@ -948,11 +1049,7 @@
             errorMessage.textContent = msg;
         }
 
-        // ✅ INISIALISASI: muat data + mulai auto-refresh
-        window.onload = () => {
-            fetchAllData('manual');
-            startAutoRefresh();
-        };
+        window.onload = fetchAllData;
     </script>
 </body>
 </html>
