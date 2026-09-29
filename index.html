@@ -151,9 +151,11 @@
 
         lucide.createIcons();
 
+        // Format tanggal untuk tampilan (YYYY-MM-DD atau Date object → DD/MM/YYYY)
         function formatTanggalID(dateStr) {
             if (!dateStr) return "-";
-            const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            const str = String(dateStr).replace(/^'/, ''); // Hapus apostrof jika ada
+            const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
             if (match) {
                 return `${match[3]}/${match[2]}/${match[1]}`;
             }
@@ -169,9 +171,10 @@
             return String(dateStr);
         }
 
+        // Ambil bagian YYYY-MM-DD dari berbagai format
         function getDateString(dateVal) {
             if (!dateVal) return "";
-            const str = String(dateVal);
+            const str = String(dateVal).replace(/^'/, '');
             const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
             if (match) return match[0];
             try {
@@ -871,7 +874,6 @@
             document.getElementById(`input_${idPrefix}`).value = '';
         }
 
-        // ================= SUBMIT FUNCTIONS DENGAN VALIDASI =================
         async function submitInventaris() {
             const form = document.getElementById('formInventaris');
             if (!form.checkValidity()) {
@@ -882,15 +884,9 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            // LOGGING untuk debugging
             console.log("=== DATA INVENTARIS YANG AKAN DIKIRIM ===");
             console.log(data);
             console.log("Tanggal Perolehan:", data.tanggal_perolehan);
-            
-            if (!data.tanggal_perolehan) {
-                showToast("Tanggal perolehan harus diisi!", "rose");
-                return;
-            }
             
             data.action = "inputInventaris";
             data.foto_barang = currentImagesBase64;
@@ -911,10 +907,6 @@
             
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
-            console.log("=== DATA BANTUAN YANG AKAN DIKIRIM ===");
-            console.log(data);
-            
             data.action = "inputBantuan";
             data.foto_barang = currentImagesBase64;
             data.input_oleh = currentUser.nama;
@@ -933,10 +925,6 @@
             
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
-            console.log("=== DATA PENGELUARAN YANG AKAN DIKIRIM ===");
-            console.log(data);
-            
             data.action = "inputPengeluaran";
             data.input_oleh = currentUser.nama;
             
@@ -953,7 +941,6 @@
             
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
             data.action = "laporanRusak";
             data.foto_rusak = currentImagesBase64;
             data.pelapor = currentUser.nama;
@@ -972,7 +959,6 @@
             
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
             data.action = "peminjaman";
             data.foto_barang = currentImagesBase64;
             data.peminjam = currentUser.nama;
