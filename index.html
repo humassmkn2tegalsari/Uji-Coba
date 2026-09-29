@@ -63,27 +63,20 @@
         .custom-table td { padding: 12px; font-size: 12px; font-weight: 600; color: #475569; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .custom-table tr:hover td { background: rgba(99, 102, 241, 0.03); }
 
-        /* Tab Navigation */
         .tab-btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 1rem;
-            font-weight: 800;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.3s ease;
-            background: rgba(255,255,255,0.5);
-            color: #64748b;
+            padding: 0.75rem 1.5rem; border-radius: 1rem; font-weight: 800; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s ease;
+            background: rgba(255,255,255,0.5); color: #64748b;
         }
         .tab-btn.active {
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            color: white;
+            background: linear-gradient(135deg, #6366f1, #a855f7); color: white;
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
-        .tab-btn:hover:not(.active) {
-            background: rgba(255,255,255,0.8);
-            color: #4f46e5;
-        }
+        .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.8); color: #4f46e5; }
+        
+        input[type="date"] { color: #475569; }
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; transition: 0.2s; }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -95,7 +88,6 @@
         </div>
     </div>
 
-    <!-- HALAMAN LOGIN -->
     <div id="loginPage" class="min-h-screen flex items-center justify-center p-6">
         <div class="w-full max-w-md glass-card rounded-[3rem] p-10 space-y-10 relative overflow-hidden animate-in">
             <div class="absolute top-0 right-0 p-8 opacity-5"><i data-lucide="package" class="w-32 h-32"></i></div>
@@ -122,7 +114,6 @@
         </div>
     </div>
 
-    <!-- HALAMAN UTAMA APLIKASI -->
     <div id="mainPage" class="hidden p-4 md:p-8 animate-in pb-24">
         <div class="max-w-6xl mx-auto space-y-6">
             <div class="flex items-center justify-between glass-card p-4 rounded-[2rem] sticky top-4 z-50">
@@ -140,14 +131,9 @@
                 </button>
             </div>
 
-            <div id="navMenu" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+            <div id="navMenu" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"></div>
 
-            <div id="contentArea" class="glass-card rounded-[2.5rem] p-6 md:p-8 min-h-[400px]">
-                <div class="text-center py-20 text-slate-400">
-                    <i data-lucide="mouse-pointer-click" class="w-12 h-12 mx-auto mb-4 opacity-50"></i>
-                    <p class="font-bold text-sm uppercase tracking-widest">Pilih menu di atas untuk memulai</p>
-                </div>
-            </div>
+            <div id="contentArea" class="glass-card rounded-[2.5rem] p-6 md:p-8 min-h-[400px]"></div>
         </div>
     </div>
 
@@ -161,9 +147,44 @@
         let allBantuanData = [];
         let allRusakData = [];
         let allPeminjamanData = [];
-        let currentDashboardTab = 'inventaris';
+        let allPengeluaranData = [];
 
         lucide.createIcons();
+
+        function formatTanggalID(dateStr) {
+            if (!dateStr) return "-";
+            const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                return `${match[3]}/${match[2]}/${match[1]}`;
+            }
+            try {
+                const d = new Date(dateStr);
+                if (!isNaN(d.getTime())) {
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    return `${day}/${month}/${year}`;
+                }
+            } catch (e) {}
+            return String(dateStr);
+        }
+
+        function getDateString(dateVal) {
+            if (!dateVal) return "";
+            const str = String(dateVal);
+            const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) return match[0];
+            try {
+                const d = new Date(dateVal);
+                if (!isNaN(d.getTime())) {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                }
+            } catch (e) {}
+            return str;
+        }
 
         async function handleLogin() {
             const user = document.getElementById('loginUser').value.trim();
@@ -212,6 +233,7 @@
             const nav = document.getElementById('navMenu');
             nav.innerHTML = '';
             const menus = [];
+            
             if (currentUser.role === 'admin') {
                 menus.push({ id: 'dashboard', label: 'Dashboard Data', icon: 'layout-dashboard' });
                 menus.push({ id: 'inputBantuan', label: 'Input Bantuan', icon: 'gift' });
@@ -219,15 +241,17 @@
             if (currentUser.role === 'bendahara' || currentUser.role === 'admin') {
                 menus.push({ id: 'inputBarang', label: 'Input Barang/Bahan', icon: 'package-plus' });
             }
-            if (currentUser.role === 'guru' || currentUser.role === 'admin' || currentUser.role === 'bendahara') {
-                menus.push({ id: 'laporanRusak', label: 'Lapor Alat Rusak', icon: 'triangle-alert' });
-                menus.push({ id: 'peminjaman', label: 'Peminjaman Barang', icon: 'hand-platter' });
-            }
+            menus.push({ id: 'laporanRusak', label: 'Lapor Alat Rusak', icon: 'triangle-alert' });
+            menus.push({ id: 'peminjaman', label: 'Peminjaman Barang', icon: 'hand-platter' });
+            menus.push({ id: 'pengeluaran', label: 'Pengeluaran Barang', icon: 'package-minus' });
+
+            const order = ['dashboard', 'inputBarang', 'inputBantuan', 'laporanRusak', 'peminjaman', 'pengeluaran'];
+            menus.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
             menus.forEach((menu, index) => {
                 const btn = document.createElement('button');
                 btn.className = `nav-btn glass-card p-4 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-600 hover:bg-white/50 ${index === 0 ? 'active' : ''}`;
-                btn.innerHTML = `<i data-lucide="${menu.icon}" class="w-6 h-6"></i><span class="text-[10px] font-black uppercase tracking-wider">${menu.label}</span>`;
+                btn.innerHTML = `<i data-lucide="${menu.icon}" class="w-6 h-6"></i><span class="text-[10px] font-black uppercase tracking-wider text-center leading-tight">${menu.label}</span>`;
                 btn.onclick = () => loadView(menu.id, btn);
                 nav.appendChild(btn);
             });
@@ -248,6 +272,7 @@
                 else if (viewId === 'laporanRusak') renderFormLaporanRusak(content);
                 else if (viewId === 'peminjaman') renderFormPeminjaman(content);
                 else if (viewId === 'inputBantuan') renderFormBantuan(content);
+                else if (viewId === 'pengeluaran') renderFormPengeluaran(content);
                 lucide.createIcons();
             }, 300);
         }
@@ -257,24 +282,13 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <h2 class="text-lg font-black text-slate-800 flex items-center gap-2"><i data-lucide="layout-dashboard" class="w-5 h-5 text-indigo-500"></i> Dashboard Data</h2>
                 </div>
-                
-                <!-- Tab Navigation -->
-                <div class="flex flex-wrap gap-2 mb-6 p-2 bg-white/30 rounded-2xl">
-                    <button onclick="switchDashboardTab('inventaris')" id="tab-inventaris" class="tab-btn active flex items-center gap-2">
-                        <i data-lucide="package" class="w-4 h-4"></i> Inventaris
-                    </button>
-                    <button onclick="switchDashboardTab('bantuan')" id="tab-bantuan" class="tab-btn flex items-center gap-2">
-                        <i data-lucide="gift" class="w-4 h-4"></i> Bantuan
-                    </button>
-                    <button onclick="switchDashboardTab('rusak')" id="tab-rusak" class="tab-btn flex items-center gap-2">
-                        <i data-lucide="triangle-alert" class="w-4 h-4"></i> Barang Rusak
-                    </button>
-                    <button onclick="switchDashboardTab('peminjaman')" id="tab-peminjaman" class="tab-btn flex items-center gap-2">
-                        <i data-lucide="hand-platter" class="w-4 h-4"></i> Peminjaman
-                    </button>
+                <div class="flex flex-wrap gap-2 mb-6 p-2 bg-white/30 rounded-2xl overflow-x-auto">
+                    <button onclick="switchDashboardTab('inventaris')" id="tab-inventaris" class="tab-btn active flex items-center gap-2 whitespace-nowrap"><i data-lucide="package" class="w-4 h-4"></i> Inventaris</button>
+                    <button onclick="switchDashboardTab('bantuan')" id="tab-bantuan" class="tab-btn flex items-center gap-2 whitespace-nowrap"><i data-lucide="gift" class="w-4 h-4"></i> Bantuan</button>
+                    <button onclick="switchDashboardTab('rusak')" id="tab-rusak" class="tab-btn flex items-center gap-2 whitespace-nowrap"><i data-lucide="triangle-alert" class="w-4 h-4"></i> Barang Rusak</button>
+                    <button onclick="switchDashboardTab('peminjaman')" id="tab-peminjaman" class="tab-btn flex items-center gap-2 whitespace-nowrap"><i data-lucide="hand-platter" class="w-4 h-4"></i> Peminjaman</button>
+                    <button onclick="switchDashboardTab('pengeluaran')" id="tab-pengeluaran" class="tab-btn flex items-center gap-2 whitespace-nowrap"><i data-lucide="package-minus" class="w-4 h-4"></i> Pengeluaran</button>
                 </div>
-
-                <!-- Content Area -->
                 <div id="dashboardContent"></div>
             `;
             switchDashboardTab('inventaris');
@@ -282,9 +296,6 @@
         }
 
         function switchDashboardTab(tab) {
-            currentDashboardTab = tab;
-            
-            // Update active tab
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.add('active');
             
@@ -296,6 +307,7 @@
                 else if (tab === 'bantuan') renderBantuanDashboard(content);
                 else if (tab === 'rusak') renderRusakDashboard(content);
                 else if (tab === 'peminjaman') renderPeminjamanDashboard(content);
+                else if (tab === 'pengeluaran') renderPengeluaranDashboard(content);
                 lucide.createIcons();
             }, 200);
         }
@@ -308,27 +320,18 @@
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Unduh Excel
                     </button>
                 </div>
-                
                 <div class="glass-card p-4 rounded-2xl mb-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <input type="text" id="filterNama" placeholder="Cari Nama..." oninput="applyFilter('inventaris')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20">
-                    <select id="filterTahun" onchange="applyFilter('inventaris')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Tahun</option></select>
+                    <select id="filterTanggal" onchange="applyFilter('inventaris')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Tanggal</option></select>
                     <select id="filterSumber" onchange="applyFilter('inventaris')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Sumber</option><option value="BOS">BOS</option><option value="BPOPP">BPOPP</option><option value="PSM">PSM</option></select>
                     <select id="filterKondisi" onchange="applyFilter('inventaris')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Kondisi</option><option value="Baik">Baik</option><option value="Rusak Ringan">Rusak Ringan</option><option value="Rusak Berat">Rusak Berat</option></select>
                     <input type="text" id="filterLokasi" placeholder="Cari Lokasi..." oninput="applyFilter('inventaris')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/20">
                     <button onclick="resetFilter('inventaris')" class="px-3 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-black uppercase hover:bg-slate-300 transition">Reset</button>
                 </div>
-
                 <div class="table-container glass-card rounded-2xl p-2 max-h-[500px] overflow-y-auto">
                     <table class="custom-table" id="tableInventaris">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th><th>Jenis</th><th>Nama</th><th>Kode</th><th>Tahun</th>
-                                <th>Sumber</th><th>Harga</th><th>Kondisi</th><th>Lokasi</th><th>Bukti</th><th>Foto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyInventaris">
-                            <tr><td colspan="11" class="text-center py-8 text-slate-400">Memuat data...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Tanggal</th><th>Jenis</th><th>Nama</th><th>Kode</th><th>Tgl. Perolehan</th><th>Sumber</th><th>Harga</th><th>Kondisi</th><th>Lokasi</th><th>Bukti</th><th>Foto</th></tr></thead>
+                        <tbody id="tbodyInventaris"><tr><td colspan="11" class="text-center py-8 text-slate-400">Memuat data...</td></tr></tbody>
                     </table>
                 </div>
             `;
@@ -343,24 +346,16 @@
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Unduh Excel
                     </button>
                 </div>
-                
                 <div class="glass-card p-4 rounded-2xl mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
                     <input type="text" id="filterBantuanNama" placeholder="Cari Nama..." oninput="applyFilter('bantuan')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/20">
-                    <select id="filterBantuanTahun" onchange="applyFilter('bantuan')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Tahun</option></select>
+                    <select id="filterBantuanTanggal" onchange="applyFilter('bantuan')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Tanggal</option></select>
                     <select id="filterBantuanSumber" onchange="applyFilter('bantuan')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Sumber</option><option value="Pemerintah">Pemerintah</option><option value="Hibah Sekolah Lain">Hibah Sekolah Lain</option></select>
                     <button onclick="resetFilter('bantuan')" class="px-3 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-black uppercase hover:bg-slate-300 transition">Reset</button>
                 </div>
-
                 <div class="table-container glass-card rounded-2xl p-2 max-h-[500px] overflow-y-auto">
                     <table class="custom-table" id="tableBantuan">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th><th>Nama Barang</th><th>Tahun</th><th>Merek</th><th>Sumber</th><th>Kondisi</th><th>Lokasi</th><th>Foto</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyBantuan">
-                            <tr><td colspan="8" class="text-center py-8 text-slate-400">Memuat data...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Tanggal</th><th>Nama Barang</th><th>Tgl. Perolehan</th><th>Merek</th><th>Sumber</th><th>Kondisi</th><th>Lokasi</th><th>Foto</th></tr></thead>
+                        <tbody id="tbodyBantuan"><tr><td colspan="8" class="text-center py-8 text-slate-400">Memuat data...</td></tr></tbody>
                     </table>
                 </div>
             `;
@@ -375,23 +370,15 @@
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Unduh Excel
                     </button>
                 </div>
-                
                 <div class="glass-card p-4 rounded-2xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
                     <input type="text" id="filterRusakNama" placeholder="Cari Nama Barang..." oninput="applyFilter('rusak')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-rose-500/20">
                     <input type="text" id="filterRusakLokasi" placeholder="Cari Lokasi..." oninput="applyFilter('rusak')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-rose-500/20">
                     <button onclick="resetFilter('rusak')" class="px-3 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-black uppercase hover:bg-slate-300 transition">Reset</button>
                 </div>
-
                 <div class="table-container glass-card rounded-2xl p-2 max-h-[500px] overflow-y-auto">
                     <table class="custom-table" id="tableRusak">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th><th>Nama Barang</th><th>Lokasi</th><th>Foto</th><th>Pelapor</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyRusak">
-                            <tr><td colspan="5" class="text-center py-8 text-slate-400">Memuat data...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Tanggal</th><th>Nama Barang</th><th>Lokasi</th><th>Foto</th><th>Pelapor</th></tr></thead>
+                        <tbody id="tbodyRusak"><tr><td colspan="5" class="text-center py-8 text-slate-400">Memuat data...</td></tr></tbody>
                     </table>
                 </div>
             `;
@@ -406,42 +393,54 @@
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Unduh Excel
                     </button>
                 </div>
-                
                 <div class="glass-card p-4 rounded-2xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
                     <input type="text" id="filterPinjamNama" placeholder="Cari Nama Alat..." oninput="applyFilter('peminjaman')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500/20">
                     <select id="filterPinjamPeminjam" onchange="applyFilter('peminjaman')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none"><option value="">Semua Peminjam</option><option value="Guru">Guru</option><option value="Eksternal">Eksternal</option></select>
                     <button onclick="resetFilter('peminjaman')" class="px-3 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-black uppercase hover:bg-slate-300 transition">Reset</button>
                 </div>
-
                 <div class="table-container glass-card rounded-2xl p-2 max-h-[500px] overflow-y-auto">
                     <table class="custom-table" id="tablePeminjaman">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th><th>Nama Alat</th><th>Peminjam</th><th>Keterangan</th><th>Foto</th><th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyPeminjaman">
-                            <tr><td colspan="6" class="text-center py-8 text-slate-400">Memuat data...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Tanggal</th><th>Nama Alat</th><th>Peminjam</th><th>Keterangan</th><th>Foto</th><th>Status</th></tr></thead>
+                        <tbody id="tbodyPeminjaman"><tr><td colspan="6" class="text-center py-8 text-slate-400">Memuat data...</td></tr></tbody>
                     </table>
                 </div>
             `;
             fetchPeminjamanData();
         }
 
-        // Data Fetching Functions
+        function renderPengeluaranDashboard(container) {
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                    <h3 class="text-base font-black text-slate-800 flex items-center gap-2"><i data-lucide="package-minus" class="w-5 h-5 text-orange-500"></i> Dashboard Pengeluaran Barang</h3>
+                    <button onclick="exportToExcel('Pengeluaran')" class="tap-scale px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Unduh Excel
+                    </button>
+                </div>
+                <div class="glass-card p-4 rounded-2xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" id="filterKeluarNama" placeholder="Cari Nama Barang..." oninput="applyFilter('pengeluaran')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500/20">
+                    <input type="text" id="filterKeluarPenerima" placeholder="Cari Nama Penerima..." oninput="applyFilter('pengeluaran')" class="px-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-orange-500/20">
+                    <button onclick="resetFilter('pengeluaran')" class="px-3 py-2 bg-slate-200 text-slate-600 rounded-lg text-xs font-black uppercase hover:bg-slate-300 transition">Reset</button>
+                </div>
+                <div class="table-container glass-card rounded-2xl p-2 max-h-[500px] overflow-y-auto">
+                    <table class="custom-table" id="tablePengeluaran">
+                        <thead><tr><th>Tgl. Input</th><th>Tgl. Pengeluaran</th><th>Nama Barang</th><th>Jumlah</th><th>Peruntukan</th><th>Tgl. Penyerahan</th><th>Penerima</th><th>Oleh</th></tr></thead>
+                        <tbody id="tbodyPengeluaran"><tr><td colspan="8" class="text-center py-8 text-slate-400">Memuat data...</td></tr></tbody>
+                    </table>
+                </div>
+            `;
+            fetchPengeluaranData();
+        }
+
         async function fetchInventoryData() {
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&sheet=Inventaris`);
                 const result = await res.json();
                 if (result.status === "success") {
                     allInventoryData = result.data;
-                    populateFilterOptions();
+                    populateDateOptions('filterTanggal', allInventoryData, 'tanggal_perolehan');
                     applyFilter('inventaris');
                 }
-            } catch (e) {
-                document.getElementById('tbodyInventaris').innerHTML = `<tr><td colspan="11" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`;
-            }
+            } catch (e) { document.getElementById('tbodyInventaris').innerHTML = `<tr><td colspan="11" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`; }
         }
 
         async function fetchBantuanData() {
@@ -450,264 +449,214 @@
                 const result = await res.json();
                 if (result.status === "success") {
                     allBantuanData = result.data;
-                    populateBantuanFilterOptions();
+                    populateDateOptions('filterBantuanTanggal', allBantuanData, 'tanggal_perolehan');
                     applyFilter('bantuan');
                 }
-            } catch (e) {
-                document.getElementById('tbodyBantuan').innerHTML = `<tr><td colspan="8" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`;
-            }
+            } catch (e) { document.getElementById('tbodyBantuan').innerHTML = `<tr><td colspan="8" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`; }
         }
 
         async function fetchRusakData() {
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&sheet=LaporanRusak`);
                 const result = await res.json();
-                if (result.status === "success") {
-                    allRusakData = result.data;
-                    applyFilter('rusak');
-                }
-            } catch (e) {
-                document.getElementById('tbodyRusak').innerHTML = `<tr><td colspan="5" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`;
-            }
+                if (result.status === "success") { allRusakData = result.data; applyFilter('rusak'); }
+            } catch (e) { document.getElementById('tbodyRusak').innerHTML = `<tr><td colspan="5" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`; }
         }
 
         async function fetchPeminjamanData() {
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&sheet=Peminjaman`);
                 const result = await res.json();
-                if (result.status === "success") {
-                    allPeminjamanData = result.data;
-                    applyFilter('peminjaman');
-                }
-            } catch (e) {
-                document.getElementById('tbodyPeminjaman').innerHTML = `<tr><td colspan="6" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`;
-            }
+                if (result.status === "success") { allPeminjamanData = result.data; applyFilter('peminjaman'); }
+            } catch (e) { document.getElementById('tbodyPeminjaman').innerHTML = `<tr><td colspan="6" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`; }
         }
 
-        function populateFilterOptions() {
-            const tahunSet = new Set(allInventoryData.map(d => d.tahun).filter(Boolean));
-            const selectTahun = document.getElementById('filterTahun');
-            if (!selectTahun) return;
-            selectTahun.innerHTML = '<option value="">Semua Tahun</option>';
-            tahunSet.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t; opt.innerText = t;
-                selectTahun.appendChild(opt);
-            });
+        async function fetchPengeluaranData() {
+            try {
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getData&sheet=Pengeluaran`);
+                const result = await res.json();
+                if (result.status === "success") { allPengeluaranData = result.data; applyFilter('pengeluaran'); }
+            } catch (e) { document.getElementById('tbodyPengeluaran').innerHTML = `<tr><td colspan="8" class="text-center py-8 text-rose-500 font-bold">Gagal memuat data</td></tr>`; }
         }
 
-        function populateBantuanFilterOptions() {
-            const tahunSet = new Set(allBantuanData.map(d => d.tahun).filter(Boolean));
-            const selectTahun = document.getElementById('filterBantuanTahun');
-            if (!selectTahun) return;
-            selectTahun.innerHTML = '<option value="">Semua Tahun</option>';
-            tahunSet.forEach(t => {
+        function populateDateOptions(selectId, data, dateField) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.innerHTML = '<option value="">Semua Tanggal</option>';
+            const dates = [...new Set(data.map(d => getDateString(d[dateField])).filter(Boolean))].sort().reverse();
+            dates.forEach(d => {
                 const opt = document.createElement('option');
-                opt.value = t; opt.innerText = t;
-                selectTahun.appendChild(opt);
+                opt.value = d; 
+                opt.innerText = formatTanggalID(d);
+                select.appendChild(opt);
             });
         }
 
         function applyFilter(type) {
             if (type === 'inventaris') {
-                const nama = document.getElementById('filterNama').value.toLowerCase();
-                const tahun = document.getElementById('filterTahun').value;
-                const sumber = document.getElementById('filterSumber').value;
-                const kondisi = document.getElementById('filterKondisi').value;
-                const lokasi = document.getElementById('filterLokasi').value.toLowerCase();
-
+                const f = {
+                    nama: document.getElementById('filterNama').value.toLowerCase(),
+                    tanggal: document.getElementById('filterTanggal').value,
+                    sumber: document.getElementById('filterSumber').value,
+                    kondisi: document.getElementById('filterKondisi').value,
+                    lokasi: document.getElementById('filterLokasi').value.toLowerCase()
+                };
                 const filtered = allInventoryData.filter(row => {
-                    return (!nama || String(row.nama).toLowerCase().includes(nama)) &&
-                           (!tahun || String(row.tahun) === tahun) &&
-                           (!sumber || String(row.sumber_dana) === sumber) &&
-                           (!kondisi || String(row.kondisi) === kondisi) &&
-                           (!lokasi || String(row.lokasi).toLowerCase().includes(lokasi));
+                    const rowDate = getDateString(row.tanggal_perolehan);
+                    return (!f.nama || String(row.nama).toLowerCase().includes(f.nama)) &&
+                           (!f.tanggal || rowDate === f.tanggal) &&
+                           (!f.sumber || String(row.sumber_dana) === f.sumber) &&
+                           (!f.kondisi || String(row.kondisi) === f.kondisi) &&
+                           (!f.lokasi || String(row.lokasi).toLowerCase().includes(f.lokasi));
                 });
                 renderInventarisTable(filtered);
             }
             else if (type === 'bantuan') {
-                const nama = document.getElementById('filterBantuanNama').value.toLowerCase();
-                const tahun = document.getElementById('filterBantuanTahun').value;
-                const sumber = document.getElementById('filterBantuanSumber').value;
-
+                const f = {
+                    nama: document.getElementById('filterBantuanNama').value.toLowerCase(),
+                    tanggal: document.getElementById('filterBantuanTanggal').value,
+                    sumber: document.getElementById('filterBantuanSumber').value
+                };
                 const filtered = allBantuanData.filter(row => {
-                    return (!nama || String(row.nama_barang).toLowerCase().includes(nama)) &&
-                           (!tahun || String(row.tahun) === tahun) &&
-                           (!sumber || String(row.sumber_bantuan) === sumber);
+                    const rowDate = getDateString(row.tanggal_perolehan);
+                    return (!f.nama || String(row.nama_barang).toLowerCase().includes(f.nama)) &&
+                           (!f.tanggal || rowDate === f.tanggal) &&
+                           (!f.sumber || String(row.sumber_bantuan) === f.sumber);
                 });
                 renderBantuanTable(filtered);
             }
             else if (type === 'rusak') {
-                const nama = document.getElementById('filterRusakNama').value.toLowerCase();
-                const lokasi = document.getElementById('filterRusakLokasi').value.toLowerCase();
-
-                const filtered = allRusakData.filter(row => {
-                    return (!nama || String(row.nama_barang).toLowerCase().includes(nama)) &&
-                           (!lokasi || String(row.lokasi).toLowerCase().includes(lokasi));
-                });
+                const f = {
+                    nama: document.getElementById('filterRusakNama').value.toLowerCase(),
+                    lokasi: document.getElementById('filterRusakLokasi').value.toLowerCase()
+                };
+                const filtered = allRusakData.filter(row => (!f.nama || String(row.nama_barang).toLowerCase().includes(f.nama)) && (!f.lokasi || String(row.lokasi).toLowerCase().includes(f.lokasi)));
                 renderRusakTable(filtered);
             }
             else if (type === 'peminjaman') {
-                const nama = document.getElementById('filterPinjamNama').value.toLowerCase();
-                const peminjam = document.getElementById('filterPinjamPeminjam').value;
-
-                const filtered = allPeminjamanData.filter(row => {
-                    return (!nama || String(row.nama_alat).toLowerCase().includes(nama)) &&
-                           (!peminjam || String(row.keterangan_peminjam) === peminjam);
-                });
+                const f = {
+                    nama: document.getElementById('filterPinjamNama').value.toLowerCase(),
+                    peminjam: document.getElementById('filterPinjamPeminjam').value
+                };
+                const filtered = allPeminjamanData.filter(row => (!f.nama || String(row.nama_alat).toLowerCase().includes(f.nama)) && (!f.peminjam || String(row.keterangan_peminjam) === f.peminjam));
                 renderPeminjamanTable(filtered);
+            }
+            else if (type === 'pengeluaran') {
+                const f = {
+                    nama: document.getElementById('filterKeluarNama').value.toLowerCase(),
+                    penerima: document.getElementById('filterKeluarPenerima').value.toLowerCase()
+                };
+                const filtered = allPengeluaranData.filter(row => (!f.nama || String(row.nama_barang).toLowerCase().includes(f.nama)) && (!f.penerima || String(row.nama_penerima).toLowerCase().includes(f.penerima)));
+                renderPengeluaranTable(filtered);
             }
         }
 
         function resetFilter(type) {
             if (type === 'inventaris') {
-                document.getElementById('filterNama').value = '';
-                document.getElementById('filterTahun').value = '';
-                document.getElementById('filterSumber').value = '';
-                document.getElementById('filterKondisi').value = '';
-                document.getElementById('filterLokasi').value = '';
+                ['filterNama', 'filterTanggal', 'filterSumber', 'filterKondisi', 'filterLokasi'].forEach(id => document.getElementById(id).value = '');
                 applyFilter('inventaris');
-            }
-            else if (type === 'bantuan') {
-                document.getElementById('filterBantuanNama').value = '';
-                document.getElementById('filterBantuanTahun').value = '';
-                document.getElementById('filterBantuanSumber').value = '';
+            } else if (type === 'bantuan') {
+                ['filterBantuanNama', 'filterBantuanTanggal', 'filterBantuanSumber'].forEach(id => document.getElementById(id).value = '');
                 applyFilter('bantuan');
-            }
-            else if (type === 'rusak') {
-                document.getElementById('filterRusakNama').value = '';
-                document.getElementById('filterRusakLokasi').value = '';
+            } else if (type === 'rusak') {
+                ['filterRusakNama', 'filterRusakLokasi'].forEach(id => document.getElementById(id).value = '');
                 applyFilter('rusak');
-            }
-            else if (type === 'peminjaman') {
-                document.getElementById('filterPinjamNama').value = '';
-                document.getElementById('filterPinjamPeminjam').value = '';
+            } else if (type === 'peminjaman') {
+                ['filterPinjamNama', 'filterPinjamPeminjam'].forEach(id => document.getElementById(id).value = '');
                 applyFilter('peminjaman');
+            } else if (type === 'pengeluaran') {
+                ['filterKeluarNama', 'filterKeluarPenerima'].forEach(id => document.getElementById(id).value = '');
+                applyFilter('pengeluaran');
             }
         }
 
         function renderInventarisTable(data) {
             const tbody = document.getElementById('tbodyInventaris');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-8 text-slate-400 font-bold">Tidak ada data yang cocok</td></tr>`;
-                return;
-            }
+            if (!tbody) return; tbody.innerHTML = '';
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="11" class="text-center py-8 text-slate-400 font-bold">Tidak ada data</td></tr>`; return; }
             data.slice(-50).reverse().forEach(row => {
                 const tr = document.createElement('tr');
-                const tgl = row.timestamp ? new Date(row.timestamp).toLocaleDateString('id-ID') : '-';
+                const tgl = row.timestamp ? formatTanggalID(row.timestamp) : '-';
+                const tglPerolehan = formatTanggalID(row.tanggal_perolehan);
                 const harga = row.harga ? 'Rp ' + Number(row.harga).toLocaleString('id-ID') : '-';
                 const makeLink = (url) => url && url !== '-' ? `<a href="${url}" target="_blank" class="text-indigo-600 hover:underline font-bold text-[10px]">Lihat</a>` : '-';
-
-                tr.innerHTML = `
-                    <td>${tgl}</td><td>${row.jenis || '-'}</td><td class="font-bold text-slate-700">${row.nama || '-'}</td>
-                    <td>${row.kode || '-'}</td><td>${row.tahun || '-'}</td><td><span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-[9px] font-black">${row.sumber_dana || '-'}</span></td>
-                    <td>${harga}</td><td>${row.kondisi || '-'}</td><td>${row.lokasi || '-'}</td>
-                    <td>${makeLink(row.bukti_pembelian)}</td>
-                    <td>${makeLink(row.foto_barang)}</td>
-                `;
+                tr.innerHTML = `<td>${tgl}</td><td>${row.jenis || '-'}</td><td class="font-bold text-slate-700">${row.nama || '-'}</td><td>${row.kode || '-'}</td><td>${tglPerolehan}</td><td><span class="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-[9px] font-black">${row.sumber_dana || '-'}</span></td><td>${harga}</td><td>${row.kondisi || '-'}</td><td>${row.lokasi || '-'}</td><td>${makeLink(row.bukti_pembelian)}</td><td>${makeLink(row.foto_barang)}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function renderBantuanTable(data) {
             const tbody = document.getElementById('tbodyBantuan');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 font-bold">Tidak ada data yang cocok</td></tr>`;
-                return;
-            }
+            if (!tbody) return; tbody.innerHTML = '';
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 font-bold">Tidak ada data</td></tr>`; return; }
             data.slice(-50).reverse().forEach(row => {
                 const tr = document.createElement('tr');
-                const tgl = row.timestamp ? new Date(row.timestamp).toLocaleDateString('id-ID') : '-';
+                const tgl = row.timestamp ? formatTanggalID(row.timestamp) : '-';
+                const tglPerolehan = formatTanggalID(row.tanggal_perolehan);
                 const makeLink = (url) => url && url !== '-' ? `<a href="${url}" target="_blank" class="text-emerald-600 hover:underline font-bold text-[10px]">Lihat</a>` : '-';
-
-                tr.innerHTML = `
-                    <td>${tgl}</td><td class="font-bold text-slate-700">${row.nama_barang || '-'}</td>
-                    <td>${row.tahun || '-'}</td><td>${row.merek || '-'}</td>
-                    <td><span class="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-black">${row.sumber_bantuan || '-'}</span></td>
-                    <td>${row.kondisi || '-'}</td><td>${row.lokasi || '-'}</td>
-                    <td>${makeLink(row.foto_barang)}</td>
-                `;
+                tr.innerHTML = `<td>${tgl}</td><td class="font-bold text-slate-700">${row.nama_barang || '-'}</td><td>${tglPerolehan}</td><td>${row.merek || '-'}</td><td><span class="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-black">${row.sumber_bantuan || '-'}</span></td><td>${row.kondisi || '-'}</td><td>${row.lokasi || '-'}</td><td>${makeLink(row.foto_barang)}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function renderRusakTable(data) {
             const tbody = document.getElementById('tbodyRusak');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 font-bold">Tidak ada data yang cocok</td></tr>`;
-                return;
-            }
+            if (!tbody) return; tbody.innerHTML = '';
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400 font-bold">Tidak ada data</td></tr>`; return; }
             data.slice(-50).reverse().forEach(row => {
                 const tr = document.createElement('tr');
-                const tgl = row.timestamp ? new Date(row.timestamp).toLocaleDateString('id-ID') : '-';
+                const tgl = row.timestamp ? formatTanggalID(row.timestamp) : '-';
                 const makeLink = (url) => url && url !== '-' ? `<a href="${url}" target="_blank" class="text-rose-600 hover:underline font-bold text-[10px]">Lihat</a>` : '-';
-
-                tr.innerHTML = `
-                    <td>${tgl}</td><td class="font-bold text-slate-700">${row.nama_barang || '-'}</td>
-                    <td>${row.lokasi || '-'}</td>
-                    <td>${makeLink(row.foto_rusak)}</td>
-                    <td>${row.pelapor || '-'}</td>
-                `;
+                tr.innerHTML = `<td>${tgl}</td><td class="font-bold text-slate-700">${row.nama_barang || '-'}</td><td>${row.lokasi || '-'}</td><td>${makeLink(row.foto_rusak)}</td><td>${row.pelapor || '-'}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function renderPeminjamanTable(data) {
             const tbody = document.getElementById('tbodyPeminjaman');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 font-bold">Tidak ada data yang cocok</td></tr>`;
-                return;
-            }
+            if (!tbody) return; tbody.innerHTML = '';
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 font-bold">Tidak ada data</td></tr>`; return; }
             data.slice(-50).reverse().forEach(row => {
                 const tr = document.createElement('tr');
-                const tgl = row.timestamp ? new Date(row.timestamp).toLocaleDateString('id-ID') : '-';
+                const tgl = row.timestamp ? formatTanggalID(row.timestamp) : '-';
                 const makeLink = (url) => url && url !== '-' ? `<a href="${url}" target="_blank" class="text-amber-600 hover:underline font-bold text-[10px]">Lihat</a>` : '-';
                 const statusClass = row.status === 'Dipinjam' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600';
+                tr.innerHTML = `<td>${tgl}</td><td class="font-bold text-slate-700">${row.nama_alat || '-'}</td><td>${row.peminjam || '-'}</td><td>${row.keterangan_peminjam || '-'}</td><td>${makeLink(row.foto_barang)}</td><td><span class="px-2 py-1 ${statusClass} rounded-md text-[9px] font-black">${row.status || '-'}</span></td>`;
+                tbody.appendChild(tr);
+            });
+        }
 
-                tr.innerHTML = `
-                    <td>${tgl}</td><td class="font-bold text-slate-700">${row.nama_alat || '-'}</td>
-                    <td>${row.peminjam || '-'}</td><td>${row.keterangan_peminjam || '-'}</td>
-                    <td>${makeLink(row.foto_barang)}</td>
-                    <td><span class="px-2 py-1 ${statusClass} rounded-md text-[9px] font-black">${row.status || '-'}</span></td>
-                `;
+        function renderPengeluaranTable(data) {
+            const tbody = document.getElementById('tbodyPengeluaran');
+            if (!tbody) return; tbody.innerHTML = '';
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 font-bold">Tidak ada data</td></tr>`; return; }
+            data.slice(-50).reverse().forEach(row => {
+                const tr = document.createElement('tr');
+                const tglInput = row.timestamp ? formatTanggalID(row.timestamp) : '-';
+                const tglKeluar = formatTanggalID(row.tanggal_pengeluaran);
+                const tglSerah = formatTanggalID(row.tanggal_penyerahan);
+                tr.innerHTML = `<td>${tglInput}</td><td>${tglKeluar}</td><td class="font-bold text-slate-700">${row.nama_barang || '-'}</td><td>${row.jumlah || '-'}</td><td>${row.peruntukan || '-'}</td><td>${tglSerah}</td><td>${row.nama_penerima || '-'}</td><td>${row.input_oleh || '-'}</td>`;
                 tbody.appendChild(tr);
             });
         }
 
         function exportToExcel(type) {
             let table, fileName;
-            if (type === 'Inventaris') {
-                table = document.getElementById("tableInventaris");
-                fileName = `Data_Inventaris_Sarpras_${new Date().toISOString().slice(0,10)}.xlsx`;
-            } else if (type === 'Bantuan') {
-                table = document.getElementById("tableBantuan");
-                fileName = `Data_Bantuan_Sarpras_${new Date().toISOString().slice(0,10)}.xlsx`;
-            } else if (type === 'Rusak') {
-                table = document.getElementById("tableRusak");
-                fileName = `Data_Barang_Rusak_Sarpras_${new Date().toISOString().slice(0,10)}.xlsx`;
-            } else if (type === 'Peminjaman') {
-                table = document.getElementById("tablePeminjaman");
-                fileName = `Data_Peminjaman_Sarpras_${new Date().toISOString().slice(0,10)}.xlsx`;
-            }
+            if (type === 'Inventaris') { table = document.getElementById("tableInventaris"); fileName = `Data_Inventaris_${new Date().toISOString().slice(0,10)}.xlsx`; } 
+            else if (type === 'Bantuan') { table = document.getElementById("tableBantuan"); fileName = `Data_Bantuan_${new Date().toISOString().slice(0,10)}.xlsx`; } 
+            else if (type === 'Rusak') { table = document.getElementById("tableRusak"); fileName = `Data_Barang_Rusak_${new Date().toISOString().slice(0,10)}.xlsx`; } 
+            else if (type === 'Peminjaman') { table = document.getElementById("tablePeminjaman"); fileName = `Data_Peminjaman_${new Date().toISOString().slice(0,10)}.xlsx`; }
+            else if (type === 'Pengeluaran') { table = document.getElementById("tablePengeluaran"); fileName = `Data_Pengeluaran_${new Date().toISOString().slice(0,10)}.xlsx`; }
             
             const wb = XLSX.utils.table_to_book(table, {sheet: type});
             XLSX.writeFile(wb, fileName);
             showToast(`File Excel ${type} berhasil diunduh!`, "emerald");
         }
 
-        // Form rendering functions (tetap sama seperti sebelumnya)
         function renderFormInputBarang(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-indigo-500"></i> Input Pembelian Bahan/Alat</h2>
-                <form onsubmit="submitInventaris(event)" class="space-y-4">
+                <form id="formInventaris" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <select name="jenis" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                             <option value="Barang">Barang / Alat</option><option value="Bahan">Bahan Habis Pakai</option>
@@ -716,7 +665,10 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" name="kode" placeholder="Kode Lengkap" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-                        <input type="number" name="tahun" placeholder="Tahun Perolehan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <div class="relative">
+                            <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-indigo-500 uppercase">Tanggal Perolehan</label>
+                            <input type="date" name="tanggal_perolehan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" name="merek" placeholder="Merek / Type" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
@@ -732,11 +684,9 @@
                     </div>
                     <input type="text" name="lokasi" placeholder="Lokasi Penempatan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                     <textarea name="keterangan" placeholder="Keterangan Tambahan" rows="2" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"></textarea>
-                    
                     ${renderUploadSection('foto_barang', 'Unggah Foto Barang/Bahan (Maks. 5 Foto)', true)}
                     ${renderUploadSection('bukti_pembelian', 'Unggah Bukti Pembelian (Nota/Kwitansi/Rekening Koran)', false)}
-
-                    <button type="submit" id="btnSubmitBarang" class="tap-scale w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data</button>
+                    <button type="button" onclick="submitInventaris()" id="btnSubmitBarang" class="tap-scale w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data</button>
                 </form>
             `;
         }
@@ -744,10 +694,13 @@
         function renderFormBantuan(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="gift" class="w-5 h-5 text-emerald-500"></i> Input Bantuan Sarpras</h2>
-                <form onsubmit="submitBantuan(event)" class="space-y-4">
+                <form id="formBantuan" class="space-y-4">
                     <input type="text" name="nama_barang" placeholder="Nama Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="number" name="tahun" placeholder="Tahun Perolehan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                        <div class="relative">
+                            <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-emerald-600 uppercase">Tanggal Perolehan</label>
+                            <input type="date" name="tanggal_perolehan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                        </div>
                         <input type="text" name="merek" placeholder="Merek / Tipe" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                     </div>
                     <select name="sumber_bantuan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
@@ -757,10 +710,35 @@
                         <option value="Baik">Baik</option><option value="Perlu Perbaikan">Perlu Perbaikan</option>
                     </select>
                     <input type="text" name="lokasi" placeholder="Lokasi Penempatan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
-                    
                     ${renderUploadSection('foto_barang_bantuan', 'Unggah Foto Barang Bantuan (Maks. 5 Foto)', true)}
+                    <button type="button" onclick="submitBantuan()" id="btnSubmitBantuan" class="tap-scale w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data Bantuan</button>
+                </form>
+            `;
+        }
 
-                    <button type="submit" id="btnSubmitBantuan" class="tap-scale w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data Bantuan</button>
+        function renderFormPengeluaran(container) {
+            container.innerHTML = `
+                <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="package-minus" class="w-5 h-5 text-orange-500"></i> Pengeluaran Barang Habis Pakai</h2>
+                <form id="formPengeluaran" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-orange-600 uppercase">Tanggal Pengeluaran</label>
+                            <input type="date" name="tanggal_pengeluaran" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        </div>
+                        <input type="text" name="nama_barang" placeholder="Nama Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="number" name="jumlah" placeholder="Jumlah Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        <input type="text" name="peruntukan" placeholder="Peruntukan (Cth: Praktikum Kelas X)" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-orange-600 uppercase">Tanggal Penyerahan</label>
+                            <input type="date" name="tanggal_penyerahan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        </div>
+                        <input type="text" name="nama_penerima" placeholder="Nama Penerima" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                    </div>
+                    <button type="button" onclick="submitPengeluaran()" id="btnSubmitPengeluaran" class="tap-scale w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data Pengeluaran</button>
                 </form>
             `;
         }
@@ -768,11 +746,11 @@
         function renderFormLaporanRusak(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="triangle-alert" class="w-5 h-5 text-rose-500"></i> Laporan Alat Rusak</h2>
-                <form onsubmit="submitLaporanRusak(event)" class="space-y-4">
+                <form id="formRusak" class="space-y-4">
                     <input type="text" name="nama_barang" placeholder="Nama Barang Rusak" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20" required>
                     <input type="text" name="lokasi" placeholder="Lokasi Barang Rusak" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20" required>
                     ${renderUploadSection('foto_rusak', 'Unggah Foto Kerusakan (Maks. 5 Foto)', true)}
-                    <button type="submit" id="btnSubmitRusak" class="tap-scale w-full py-4 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Kirim Laporan</button>
+                    <button type="button" onclick="submitLaporanRusak()" id="btnSubmitRusak" class="tap-scale w-full py-4 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Kirim Laporan</button>
                 </form>
             `;
         }
@@ -780,13 +758,13 @@
         function renderFormPeminjaman(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="hand-platter" class="w-5 h-5 text-amber-500"></i> Peminjaman Barang</h2>
-                <form onsubmit="submitPeminjaman(event)" class="space-y-4">
+                <form id="formPeminjaman" class="space-y-4">
                     <input type="text" name="nama_alat" placeholder="Nama Alat yang Dipinjam" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20" required>
                     <select name="keterangan_peminjam" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20" required>
                         <option value="Guru">Guru</option><option value="Eksternal">Eksternal</option>
                     </select>
                     ${renderUploadSection('foto_pinjam', 'Unggah Foto Barang Saat Dipinjam (Maks. 5 Foto)', true)}
-                    <button type="submit" id="btnSubmitPinjam" class="tap-scale w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Ajukan Peminjaman</button>
+                    <button type="button" onclick="submitPeminjaman()" id="btnSubmitPinjam" class="tap-scale w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Ajukan Peminjaman</button>
                 </form>
             `;
         }
@@ -818,11 +796,9 @@
                 event.target.value = '';
                 return;
             }
-
             const grid = document.getElementById(`grid_${idPrefix}`);
             const placeholder = document.getElementById(`placeholder_${idPrefix}`);
             const countLabel = document.getElementById(`count_${idPrefix}`);
-            
             grid.innerHTML = '';
             placeholder.classList.add('hidden');
             
@@ -831,26 +807,18 @@
                 for (let i = 0; i < files.length; i++) {
                     const compressed = await compressImage(files[i]);
                     currentImagesBase64.push(compressed);
-                    
                     const div = document.createElement('div');
                     div.className = 'preview-item';
-                    div.innerHTML = `
-                        <img src="${compressed}">
-                        <div class="remove-photo-btn" onclick="removeImage('${idPrefix}', ${i}, event)"><i data-lucide="x" class="w-3 h-3"></i></div>
-                    `;
+                    div.innerHTML = `<img src="${compressed}"><div class="remove-photo-btn" onclick="removeImage('${idPrefix}', ${i}, event)"><i data-lucide="x" class="w-3 h-3"></i></div>`;
                     grid.appendChild(div);
                 }
                 countLabel.innerText = currentImagesBase64.length;
             } else {
                 const compressed = await compressImage(files[0]);
                 currentBuktiBase64 = compressed;
-                
                 const div = document.createElement('div');
                 div.className = 'preview-item';
-                div.innerHTML = `
-                    <img src="${compressed}">
-                    <div class="remove-photo-btn" onclick="removeSingleImage('${idPrefix}', event)"><i data-lucide="x" class="w-3 h-3"></i></div>
-                `;
+                div.innerHTML = `<img src="${compressed}"><div class="remove-photo-btn" onclick="removeSingleImage('${idPrefix}', event)"><i data-lucide="x" class="w-3 h-3"></i></div>`;
                 grid.appendChild(div);
                 countLabel.innerText = "1";
             }
@@ -866,15 +834,10 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
+                        let width = img.width, height = img.height;
                         const maxWidth = 800; 
-                        if (width > maxWidth) {
-                            height *= maxWidth / width;
-                            width = maxWidth;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
+                        if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         resolve(canvas.toDataURL('image/jpeg', 0.7)); 
@@ -895,9 +858,7 @@
                 grid.appendChild(div);
             });
             document.getElementById(`count_${idPrefix}`).innerText = currentImagesBase64.length;
-            if (currentImagesBase64.length === 0) {
-                document.getElementById(`placeholder_${idPrefix}`).classList.remove('hidden');
-            }
+            if (currentImagesBase64.length === 0) document.getElementById(`placeholder_${idPrefix}`).classList.remove('hidden');
             lucide.createIcons();
         }
 
@@ -910,54 +871,119 @@
             document.getElementById(`input_${idPrefix}`).value = '';
         }
 
-        async function submitInventaris(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
+        // ================= SUBMIT FUNCTIONS DENGAN VALIDASI =================
+        async function submitInventaris() {
+            const form = document.getElementById('formInventaris');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
+            // LOGGING untuk debugging
+            console.log("=== DATA INVENTARIS YANG AKAN DIKIRIM ===");
+            console.log(data);
+            console.log("Tanggal Perolehan:", data.tanggal_perolehan);
+            
+            if (!data.tanggal_perolehan) {
+                showToast("Tanggal perolehan harus diisi!", "rose");
+                return;
+            }
+            
             data.action = "inputInventaris";
             data.foto_barang = currentImagesBase64;
             data.bukti_pembelian = currentBuktiBase64;
             data.input_oleh = currentUser.nama;
+            
             await sendData(data, "btnSubmitBarang", "Data berhasil diinput ke Inventaris!", "emerald");
-            e.target.reset(); resetAllUploads();
+            form.reset();
+            resetAllUploads();
         }
 
-        async function submitBantuan(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
+        async function submitBantuan() {
+            const form = document.getElementById('formBantuan');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
+            console.log("=== DATA BANTUAN YANG AKAN DIKIRIM ===");
+            console.log(data);
+            
             data.action = "inputBantuan";
             data.foto_barang = currentImagesBase64;
             data.input_oleh = currentUser.nama;
+            
             await sendData(data, "btnSubmitBantuan", "Data bantuan berhasil disimpan!", "emerald");
-            e.target.reset(); resetAllUploads();
+            form.reset();
+            resetAllUploads();
         }
 
-        async function submitLaporanRusak(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
+        async function submitPengeluaran() {
+            const form = document.getElementById('formPengeluaran');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
+            console.log("=== DATA PENGELUARAN YANG AKAN DIKIRIM ===");
+            console.log(data);
+            
+            data.action = "inputPengeluaran";
+            data.input_oleh = currentUser.nama;
+            
+            await sendData(data, "btnSubmitPengeluaran", "Data pengeluaran berhasil disimpan!", "emerald");
+            form.reset();
+        }
+
+        async function submitLaporanRusak() {
+            const form = document.getElementById('formRusak');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
             data.action = "laporanRusak";
             data.foto_rusak = currentImagesBase64;
             data.pelapor = currentUser.nama;
+            
             await sendData(data, "btnSubmitRusak", "Laporan kerusakan berhasil dikirim!", "rose");
-            e.target.reset(); resetAllUploads();
+            form.reset();
+            resetAllUploads();
         }
 
-        async function submitPeminjaman(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
+        async function submitPeminjaman() {
+            const form = document.getElementById('formPeminjaman');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
             data.action = "peminjaman";
             data.foto_barang = currentImagesBase64;
             data.peminjam = currentUser.nama;
+            
             await sendData(data, "btnSubmitPinjam", "Alat yang sudah dipinjam dapat dirawat dan dikembalikan segera maksimal 2 hari setelah peminjaman.", "amber");
-            e.target.reset(); resetAllUploads();
+            form.reset();
+            resetAllUploads();
         }
 
         function resetAllUploads() {
-            currentImagesBase64 = [];
-            currentBuktiBase64 = "";
+            currentImagesBase64 = []; currentBuktiBase64 = "";
             document.querySelectorAll('.preview-grid').forEach(g => g.innerHTML = '');
             document.querySelectorAll('.upload-placeholder').forEach(p => p.classList.remove('hidden'));
             document.querySelectorAll('[id^="count_"]').forEach(c => c.innerText = "0");
@@ -967,21 +993,22 @@
         async function sendData(payload, btnId, successMsg, color) {
             const btn = document.getElementById(btnId);
             const originalText = btn.innerText;
-            btn.disabled = true; btn.innerHTML = `<span class="animate-pulse">Menyimpan & Mengupload Foto...</span>`;
-
+            btn.disabled = true; btn.innerHTML = `<span class="animate-pulse">Menyimpan & Mengupload...</span>`;
+            
+            console.log("Mengirim data ke server:", payload);
+            
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await response.json();
-                if (result.status === "success") {
-                    showToast(successMsg, color);
-                } else {
-                    showToast("Gagal: " + result.message, "rose");
-                }
-            } catch (err) {
-                showToast("Gagal terhubung ke server!", "rose");
-            } finally {
-                btn.disabled = false; btn.innerText = originalText;
+                console.log("Response dari server:", result);
+                
+                if (result.status === "success") showToast(successMsg, color);
+                else showToast("Gagal: " + result.message, "rose");
+            } catch (err) { 
+                console.error("Error:", err);
+                showToast("Gagal terhubung ke server!", "rose"); 
             }
+            finally { btn.disabled = false; btn.innerText = originalText; }
         }
 
         function showToast(message, color) {
@@ -989,7 +1016,6 @@
             const content = document.getElementById('toastContent');
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastMessage').textContent = message;
-            
             if (color === 'emerald') {
                 content.className = "aero-blur bg-white/95 border border-emerald-500/20 px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-3 text-emerald-600";
                 icon.setAttribute('data-lucide', 'check-circle');
@@ -1007,10 +1033,7 @@
 
         window.onload = () => {
             const saved = localStorage.getItem('sarpras_session');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                showMainPage();
-            }
+            if (saved) { currentUser = JSON.parse(saved); showMainPage(); }
         };
     </script>
 </body>
