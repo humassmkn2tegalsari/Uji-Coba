@@ -138,7 +138,7 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXRemajtn6rBJZHURRdWfAIcefQAFBbGR9LGh-3FHwyrePxcy1hMtKHPtP-XMcXomJmg/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMBGGKEJWIOn0kU6QlAPaNLbq4ZIlauwIG78tZPL7oNeu936trols9vwOoAAFwbPtX3w/exec";
         
         let currentUser = null;
         let currentImagesBase64 = []; 
@@ -151,10 +151,9 @@
 
         lucide.createIcons();
 
-        // Format tanggal untuk tampilan (YYYY-MM-DD atau Date object → DD/MM/YYYY)
         function formatTanggalID(dateStr) {
             if (!dateStr) return "-";
-            const str = String(dateStr).replace(/^'/, ''); // Hapus apostrof jika ada
+            const str = String(dateStr).replace(/^'/, '');
             const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
             if (match) {
                 return `${match[3]}/${match[2]}/${match[1]}`;
@@ -171,7 +170,6 @@
             return String(dateStr);
         }
 
-        // Ambil bagian YYYY-MM-DD dari berbagai format
         function getDateString(dateVal) {
             if (!dateVal) return "";
             const str = String(dateVal).replace(/^'/, '');
@@ -656,119 +654,120 @@
             showToast(`File Excel ${type} berhasil diunduh!`, "emerald");
         }
 
+        // ================= FORM RENDERING DENGAN ID UNIK =================
         function renderFormInputBarang(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="package-plus" class="w-5 h-5 text-indigo-500"></i> Input Pembelian Bahan/Alat</h2>
-                <form id="formInventaris" class="space-y-4">
+                <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select name="jenis" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <select id="inv_jenis" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                             <option value="Barang">Barang / Alat</option><option value="Bahan">Bahan Habis Pakai</option>
                         </select>
-                        <input type="text" name="nama" placeholder="Nama Barang/Bahan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <input type="text" id="inv_nama" placeholder="Nama Barang/Bahan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="kode" placeholder="Kode Lengkap" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <input type="text" id="inv_kode" placeholder="Kode Lengkap" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                         <div class="relative">
                             <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-indigo-500 uppercase">Tanggal Perolehan</label>
-                            <input type="date" name="tanggal_perolehan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                            <input type="date" id="inv_tanggal" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="merek" placeholder="Merek / Type" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-                        <select name="sumber_dana" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <input type="text" id="inv_merek" placeholder="Merek / Type" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <select id="inv_sumber" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                             <option value="BOS">BOS</option><option value="BPOPP">BPOPP</option><option value="PSM">PSM</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="number" name="harga" placeholder="Harga (Rp)" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-                        <select name="kondisi" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <input type="number" id="inv_harga" placeholder="Harga (Rp)" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                        <select id="inv_kondisi" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
                             <option value="Baik">Baik</option><option value="Rusak Ringan">Rusak Ringan</option><option value="Rusak Berat">Rusak Berat</option>
                         </select>
                     </div>
-                    <input type="text" name="lokasi" placeholder="Lokasi Penempatan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-                    <textarea name="keterangan" placeholder="Keterangan Tambahan" rows="2" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"></textarea>
+                    <input type="text" id="inv_lokasi" placeholder="Lokasi Penempatan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+                    <textarea id="inv_keterangan" placeholder="Keterangan Tambahan" rows="2" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20"></textarea>
                     ${renderUploadSection('foto_barang', 'Unggah Foto Barang/Bahan (Maks. 5 Foto)', true)}
                     ${renderUploadSection('bukti_pembelian', 'Unggah Bukti Pembelian (Nota/Kwitansi/Rekening Koran)', false)}
                     <button type="button" onclick="submitInventaris()" id="btnSubmitBarang" class="tap-scale w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data</button>
-                </form>
+                </div>
             `;
         }
 
         function renderFormBantuan(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="gift" class="w-5 h-5 text-emerald-500"></i> Input Bantuan Sarpras</h2>
-                <form id="formBantuan" class="space-y-4">
-                    <input type="text" name="nama_barang" placeholder="Nama Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                <div class="space-y-4">
+                    <input type="text" id="bnt_nama" placeholder="Nama Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="relative">
                             <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-emerald-600 uppercase">Tanggal Perolehan</label>
-                            <input type="date" name="tanggal_perolehan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                            <input type="date" id="bnt_tanggal" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                         </div>
-                        <input type="text" name="merek" placeholder="Merek / Tipe" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                        <input type="text" id="bnt_merek" placeholder="Merek / Tipe" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                     </div>
-                    <select name="sumber_bantuan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                    <select id="bnt_sumber" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                         <option value="Pemerintah">Bantuan Pemerintah</option><option value="Hibah Sekolah Lain">Hibah Sekolah Lain</option><option value="Lainnya">Lainnya</option>
                     </select>
-                    <select name="kondisi" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                    <select id="bnt_kondisi" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                         <option value="Baik">Baik</option><option value="Perlu Perbaikan">Perlu Perbaikan</option>
                     </select>
-                    <input type="text" name="lokasi" placeholder="Lokasi Penempatan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
+                    <input type="text" id="bnt_lokasi" placeholder="Lokasi Penempatan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20" required>
                     ${renderUploadSection('foto_barang_bantuan', 'Unggah Foto Barang Bantuan (Maks. 5 Foto)', true)}
                     <button type="button" onclick="submitBantuan()" id="btnSubmitBantuan" class="tap-scale w-full py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data Bantuan</button>
-                </form>
+                </div>
             `;
         }
 
         function renderFormPengeluaran(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="package-minus" class="w-5 h-5 text-orange-500"></i> Pengeluaran Barang Habis Pakai</h2>
-                <form id="formPengeluaran" class="space-y-4">
+                <div class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="relative">
                             <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-orange-600 uppercase">Tanggal Pengeluaran</label>
-                            <input type="date" name="tanggal_pengeluaran" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                            <input type="date" id="kluar_tgl" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
                         </div>
-                        <input type="text" name="nama_barang" placeholder="Nama Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        <input type="text" id="kluar_nama" placeholder="Nama Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="number" name="jumlah" placeholder="Jumlah Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
-                        <input type="text" name="peruntukan" placeholder="Peruntukan (Cth: Praktikum Kelas X)" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        <input type="number" id="kluar_jumlah" placeholder="Jumlah Barang" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        <input type="text" id="kluar_peruntukan" placeholder="Peruntukan (Cth: Praktikum Kelas X)" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="relative">
                             <label class="absolute -top-2 left-3 bg-white/80 px-1 text-[9px] font-black text-orange-600 uppercase">Tanggal Penyerahan</label>
-                            <input type="date" name="tanggal_penyerahan" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                            <input type="date" id="kluar_tgl_serah" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
                         </div>
-                        <input type="text" name="nama_penerima" placeholder="Nama Penerima" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
+                        <input type="text" id="kluar_penerima" placeholder="Nama Penerima" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500/20" required>
                     </div>
                     <button type="button" onclick="submitPengeluaran()" id="btnSubmitPengeluaran" class="tap-scale w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Simpan Data Pengeluaran</button>
-                </form>
+                </div>
             `;
         }
 
         function renderFormLaporanRusak(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="triangle-alert" class="w-5 h-5 text-rose-500"></i> Laporan Alat Rusak</h2>
-                <form id="formRusak" class="space-y-4">
-                    <input type="text" name="nama_barang" placeholder="Nama Barang Rusak" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20" required>
-                    <input type="text" name="lokasi" placeholder="Lokasi Barang Rusak" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20" required>
+                <div class="space-y-4">
+                    <input type="text" id="rusak_nama" placeholder="Nama Barang Rusak" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20" required>
+                    <input type="text" id="rusak_lokasi" placeholder="Lokasi Barang Rusak" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20" required>
                     ${renderUploadSection('foto_rusak', 'Unggah Foto Kerusakan (Maks. 5 Foto)', true)}
                     <button type="button" onclick="submitLaporanRusak()" id="btnSubmitRusak" class="tap-scale w-full py-4 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Kirim Laporan</button>
-                </form>
+                </div>
             `;
         }
 
         function renderFormPeminjaman(container) {
             container.innerHTML = `
                 <h2 class="text-lg font-black text-slate-800 mb-6 flex items-center gap-2"><i data-lucide="hand-platter" class="w-5 h-5 text-amber-500"></i> Peminjaman Barang</h2>
-                <form id="formPeminjaman" class="space-y-4">
-                    <input type="text" name="nama_alat" placeholder="Nama Alat yang Dipinjam" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20" required>
-                    <select name="keterangan_peminjam" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20" required>
+                <div class="space-y-4">
+                    <input type="text" id="pinjam_nama" placeholder="Nama Alat yang Dipinjam" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20" required>
+                    <select id="pinjam_ket" class="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20" required>
                         <option value="Guru">Guru</option><option value="Eksternal">Eksternal</option>
                     </select>
                     ${renderUploadSection('foto_pinjam', 'Unggah Foto Barang Saat Dipinjam (Maks. 5 Foto)', true)}
                     <button type="button" onclick="submitPeminjaman()" id="btnSubmitPinjam" class="tap-scale w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg mt-4">Ajukan Peminjaman</button>
-                </form>
+                </div>
             `;
         }
 
@@ -874,97 +873,184 @@
             document.getElementById(`input_${idPrefix}`).value = '';
         }
 
+        // ================= SUBMIT FUNCTIONS - MENGAMBIL VALUE SECARA MANUAL =================
         async function submitInventaris() {
-            const form = document.getElementById('formInventaris');
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            // Ambil semua value secara manual
+            const jenis = document.getElementById('inv_jenis').value;
+            const nama = document.getElementById('inv_nama').value;
+            const kode = document.getElementById('inv_kode').value;
+            const tanggal = document.getElementById('inv_tanggal').value;
+            const merek = document.getElementById('inv_merek').value;
+            const sumber = document.getElementById('inv_sumber').value;
+            const harga = document.getElementById('inv_harga').value;
+            const kondisi = document.getElementById('inv_kondisi').value;
+            const lokasi = document.getElementById('inv_lokasi').value;
+            const keterangan = document.getElementById('inv_keterangan').value;
+            
+            // Validasi
+            if (!jenis || !nama || !kode || !tanggal || !merek || !sumber || !harga || !kondisi || !lokasi) {
+                showToast("Mohon lengkapi semua field yang wajib diisi!", "rose");
                 return;
             }
             
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
+            const data = {
+                action: "inputInventaris",
+                jenis: jenis,
+                nama: nama,
+                kode: kode,
+                tanggal_perolehan: tanggal,
+                merek: merek,
+                sumber_dana: sumber,
+                harga: harga,
+                kondisi: kondisi,
+                lokasi: lokasi,
+                keterangan: keterangan,
+                foto_barang: currentImagesBase64,
+                bukti_pembelian: currentBuktiBase64,
+                input_oleh: currentUser.nama
+            };
             
             console.log("=== DATA INVENTARIS YANG AKAN DIKIRIM ===");
             console.log(data);
-            console.log("Tanggal Perolehan:", data.tanggal_perolehan);
-            
-            data.action = "inputInventaris";
-            data.foto_barang = currentImagesBase64;
-            data.bukti_pembelian = currentBuktiBase64;
-            data.input_oleh = currentUser.nama;
+            console.log("Tanggal Perolehan:", tanggal);
             
             await sendData(data, "btnSubmitBarang", "Data berhasil diinput ke Inventaris!", "emerald");
-            form.reset();
+            
+            // Reset form
+            document.getElementById('inv_jenis').value = 'Barang';
+            document.getElementById('inv_nama').value = '';
+            document.getElementById('inv_kode').value = '';
+            document.getElementById('inv_tanggal').value = '';
+            document.getElementById('inv_merek').value = '';
+            document.getElementById('inv_sumber').value = 'BOS';
+            document.getElementById('inv_harga').value = '';
+            document.getElementById('inv_kondisi').value = 'Baik';
+            document.getElementById('inv_lokasi').value = '';
+            document.getElementById('inv_keterangan').value = '';
             resetAllUploads();
         }
 
         async function submitBantuan() {
-            const form = document.getElementById('formBantuan');
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            const nama = document.getElementById('bnt_nama').value;
+            const tanggal = document.getElementById('bnt_tanggal').value;
+            const merek = document.getElementById('bnt_merek').value;
+            const sumber = document.getElementById('bnt_sumber').value;
+            const kondisi = document.getElementById('bnt_kondisi').value;
+            const lokasi = document.getElementById('bnt_lokasi').value;
+            
+            if (!nama || !tanggal || !merek || !sumber || !kondisi || !lokasi) {
+                showToast("Mohon lengkapi semua field yang wajib diisi!", "rose");
                 return;
             }
             
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.action = "inputBantuan";
-            data.foto_barang = currentImagesBase64;
-            data.input_oleh = currentUser.nama;
+            const data = {
+                action: "inputBantuan",
+                nama_barang: nama,
+                tanggal_perolehan: tanggal,
+                merek: merek,
+                sumber_bantuan: sumber,
+                kondisi: kondisi,
+                lokasi: lokasi,
+                foto_barang: currentImagesBase64,
+                input_oleh: currentUser.nama
+            };
+            
+            console.log("=== DATA BANTUAN YANG AKAN DIKIRIM ===");
+            console.log(data);
             
             await sendData(data, "btnSubmitBantuan", "Data bantuan berhasil disimpan!", "emerald");
-            form.reset();
+            
+            document.getElementById('bnt_nama').value = '';
+            document.getElementById('bnt_tanggal').value = '';
+            document.getElementById('bnt_merek').value = '';
+            document.getElementById('bnt_sumber').value = 'Pemerintah';
+            document.getElementById('bnt_kondisi').value = 'Baik';
+            document.getElementById('bnt_lokasi').value = '';
             resetAllUploads();
         }
 
         async function submitPengeluaran() {
-            const form = document.getElementById('formPengeluaran');
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            const tglPengeluaran = document.getElementById('kluar_tgl').value;
+            const nama = document.getElementById('kluar_nama').value;
+            const jumlah = document.getElementById('kluar_jumlah').value;
+            const peruntukan = document.getElementById('kluar_peruntukan').value;
+            const tglPenyerahan = document.getElementById('kluar_tgl_serah').value;
+            const penerima = document.getElementById('kluar_penerima').value;
+            
+            if (!tglPengeluaran || !nama || !jumlah || !peruntukan || !tglPenyerahan || !penerima) {
+                showToast("Mohon lengkapi semua field yang wajib diisi!", "rose");
                 return;
             }
             
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.action = "inputPengeluaran";
-            data.input_oleh = currentUser.nama;
+            const data = {
+                action: "inputPengeluaran",
+                tanggal_pengeluaran: tglPengeluaran,
+                nama_barang: nama,
+                jumlah: jumlah,
+                peruntukan: peruntukan,
+                tanggal_penyerahan: tglPenyerahan,
+                nama_penerima: penerima,
+                input_oleh: currentUser.nama
+            };
+            
+            console.log("=== DATA PENGELUARAN YANG AKAN DIKIRIM ===");
+            console.log(data);
             
             await sendData(data, "btnSubmitPengeluaran", "Data pengeluaran berhasil disimpan!", "emerald");
-            form.reset();
+            
+            document.getElementById('kluar_tgl').value = '';
+            document.getElementById('kluar_nama').value = '';
+            document.getElementById('kluar_jumlah').value = '';
+            document.getElementById('kluar_peruntukan').value = '';
+            document.getElementById('kluar_tgl_serah').value = '';
+            document.getElementById('kluar_penerima').value = '';
         }
 
         async function submitLaporanRusak() {
-            const form = document.getElementById('formRusak');
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            const nama = document.getElementById('rusak_nama').value;
+            const lokasi = document.getElementById('rusak_lokasi').value;
+            
+            if (!nama || !lokasi) {
+                showToast("Mohon lengkapi semua field yang wajib diisi!", "rose");
                 return;
             }
             
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.action = "laporanRusak";
-            data.foto_rusak = currentImagesBase64;
-            data.pelapor = currentUser.nama;
+            const data = {
+                action: "laporanRusak",
+                nama_barang: nama,
+                lokasi: lokasi,
+                foto_rusak: currentImagesBase64,
+                pelapor: currentUser.nama
+            };
             
             await sendData(data, "btnSubmitRusak", "Laporan kerusakan berhasil dikirim!", "rose");
-            form.reset();
+            
+            document.getElementById('rusak_nama').value = '';
+            document.getElementById('rusak_lokasi').value = '';
             resetAllUploads();
         }
 
         async function submitPeminjaman() {
-            const form = document.getElementById('formPeminjaman');
-            if (!form.checkValidity()) {
-                form.reportValidity();
+            const nama = document.getElementById('pinjam_nama').value;
+            const ket = document.getElementById('pinjam_ket').value;
+            
+            if (!nama || !ket) {
+                showToast("Mohon lengkapi semua field yang wajib diisi!", "rose");
                 return;
             }
             
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            data.action = "peminjaman";
-            data.foto_barang = currentImagesBase64;
-            data.peminjam = currentUser.nama;
+            const data = {
+                action: "peminjaman",
+                nama_alat: nama,
+                keterangan_peminjam: ket,
+                foto_barang: currentImagesBase64,
+                peminjam: currentUser.nama
+            };
             
             await sendData(data, "btnSubmitPinjam", "Alat yang sudah dipinjam dapat dirawat dan dikembalikan segera maksimal 2 hari setelah peminjaman.", "amber");
-            form.reset();
+            
+            document.getElementById('pinjam_nama').value = '';
+            document.getElementById('pinjam_ket').value = 'Guru';
             resetAllUploads();
         }
 
