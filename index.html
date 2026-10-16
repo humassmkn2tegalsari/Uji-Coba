@@ -81,27 +81,37 @@
                     </svg>
                     <p class="text-[11px] font-bold text-emerald-700 leading-tight">Masukkan kode akses khusus untuk mengunduh data presensi dalam format Excel.</p>
                 </div>
+                
+                <!-- ✅ 3 OPSI EXPORT (DIPERBARUI) -->
                 <div class="space-y-3">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pilih Jenis Data Export</label>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-2">
                         <label class="cursor-pointer">
                             <input type="radio" name="exportType" value="current" checked onchange="toggleExportDateInput()" class="hidden peer">
                             <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
-                                <span class="text-xs font-bold text-slate-600 peer-checked:text-emerald-700">Data Saat Ini</span>
+                                <span class="text-[10px] font-bold text-slate-600 peer-checked:text-emerald-700">Data Saat Ini</span>
                             </div>
                         </label>
                         <label class="cursor-pointer">
                             <input type="radio" name="exportType" value="historical" onchange="toggleExportDateInput()" class="hidden peer">
                             <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
-                                <span class="text-xs font-bold text-slate-600 peer-checked:text-emerald-700">Tanggal Tertentu</span>
+                                <span class="text-[10px] font-bold text-slate-600 peer-checked:text-emerald-700">Tanggal Tertentu</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="exportType" value="all" onchange="toggleExportDateInput()" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
+                                <span class="text-[10px] font-bold text-slate-600 peer-checked:text-emerald-700">Semua Data</span>
                             </div>
                         </label>
                     </div>
+                    
                     <div id="historicalDateContainer" class="hidden space-y-2 mt-2 pt-2 border-t border-slate-100">
                         <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pilih Tanggal</label>
                         <input type="date" id="exportHistoricalDate" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                     </div>
                 </div>
+
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -128,6 +138,7 @@
                         <span>Kode akses salah! Silakan coba lagi.</span>
                     </p>
                 </div>
+                
                 <div id="exportInfo" class="bg-slate-50 p-3 rounded-xl">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data yang akan diunduh:</p>
                     <p id="exportInfoText" class="text-xs font-bold text-slate-700">-</p>
@@ -136,7 +147,7 @@
             <div class="p-4 bg-slate-50/80 border-t border-slate-100 flex gap-3">
                 <button type="button" onclick="closeExportModal()" class="flex-1 py-3.5 bg-white border-2 border-slate-200 text-slate-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">Batal</button>
                 <button type="button" id="btnConfirmExport" onclick="confirmExport()" class="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-teal-600 transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg id="btnExportIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
                         <line x1="12" y1="15" x2="12" y2="3"/>
@@ -520,39 +531,79 @@
         function goToPage(page) { dataStore[activeTab].currentPage = page; renderTable(); dataContainer.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
         function showError(msg) { loadingState.classList.add('hidden'); errorState.classList.remove('hidden'); dataContainer.classList.add('hidden'); errorMessage.textContent = msg; }
 
+        // ==========================================
+        // ✅ FUNGSI EXPORT EXCEL (DIPERBAIKI TOTAL)
+        // ==========================================
+        
         function toggleExportDateInput() {
             const type = document.querySelector('input[name="exportType"]:checked').value;
             const dateContainer = document.getElementById('historicalDateContainer');
-            if (type === 'historical') dateContainer.classList.remove('hidden');
-            else dateContainer.classList.add('hidden');
+            const infoText = document.getElementById('exportInfoText');
+            
+            if (type === 'historical') {
+                dateContainer.classList.remove('hidden');
+                // ✅ Untuk tanggal tertentu, tampilkan pesan generik (karena data belum difetch)
+                const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
+                infoText.innerHTML = `<div class="flex flex-col gap-1"><span>${labelData} - Log Historis</span><span>Jumlah data akan dihitung setelah tanggal dipilih dan kode divalidasi</span></div>`;
+            } else if (type === 'all') {
+                dateContainer.classList.add('hidden');
+                // ✅ Untuk semua data, tampilkan pesan generik
+                const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
+                infoText.innerHTML = `<div class="flex flex-col gap-1"><span>${labelData} - Seluruh Data Log</span><span>Semua data historis akan diunduh (jumlah data akan ditampilkan setelah proses)</span></div>`;
+            } else {
+                dateContainer.classList.add('hidden');
+                // ✅ Untuk data saat ini, tampilkan info aktual
+                const store = dataStore[activeTab];
+                const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
+                const tanggalStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                infoText.innerHTML = `<div class="flex flex-col gap-1"><span>${labelData} - ${tanggalStr}</span><span>Total: <strong>${store.filtered.length}</strong> data${store.filtered.length !== store.all.length ? ` (dari ${store.all.length} data keseluruhan)` : ''}</span></div>`;
+            }
         }
 
         function openExportModal() {
             const store = dataStore[activeTab];
             if (store.all.length === 0) { alert('Tidak ada data yang dapat diekspor.'); return; }
+            
+            // ✅ Reset state modal dengan benar
             document.querySelector('input[name="exportType"][value="current"]').checked = true;
             toggleExportDateInput();
             document.getElementById('exportHistoricalDate').value = '';
             document.getElementById('exportCodeInput').value = '';
             document.getElementById('exportCodeError').classList.add('hidden');
             document.getElementById('exportCodeInput').classList.remove('border-red-500');
+            
+            // ✅ PERBAIKAN: Reset tombol dengan benar (tidak merusak struktur DOM)
+            const btn = document.getElementById('btnConfirmExport');
+            btn.disabled = false;
+            // Jangan ubah innerHTML, cukup reset state
             document.getElementById('btnExportText').textContent = 'Unduh Excel';
-            document.getElementById('btnConfirmExport').disabled = false;
-            const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
-            const tanggalStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('exportInfoText').innerHTML = `<div class="flex flex-col gap-1"><span>${labelData} - ${tanggalStr}</span><span>Total: <strong>${store.filtered.length}</strong> data${store.filtered.length !== store.all.length ? ` (dari ${store.all.length} data keseluruhan)` : ''}</span></div>`;
+            document.getElementById('btnExportIcon').style.display = 'inline';
+            
             document.getElementById('exportModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             setTimeout(() => document.getElementById('exportCodeInput').focus(), 100);
         }
 
-        function closeExportModal() { document.getElementById('exportModal').classList.add('hidden'); document.body.style.overflow = ''; }
+        function closeExportModal() { 
+            document.getElementById('exportModal').classList.add('hidden'); 
+            document.body.style.overflow = ''; 
+            // ✅ Reset tombol saat modal ditutup
+            const btn = document.getElementById('btnConfirmExport');
+            btn.disabled = false;
+            document.getElementById('btnExportText').textContent = 'Unduh Excel';
+            document.getElementById('btnExportIcon').style.display = 'inline';
+        }
 
         function toggleExportCodeVisibility() {
             const input = document.getElementById('exportCodeInput');
             const icon = document.getElementById('toggleExportIcon');
-            if (input.type === 'password') { input.type = 'text'; icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'; }
-            else { input.type = 'password'; icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'; }
+            if (input.type === 'password') { 
+                input.type = 'text'; 
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'; 
+            } else { 
+                input.type = 'password'; 
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'; 
+            }
         }
 
         async function confirmExport() {
@@ -560,38 +611,81 @@
             const errorEl = document.getElementById('exportCodeError');
             const inputEl = document.getElementById('exportCodeInput');
             const btn = document.getElementById('btnConfirmExport');
+            const btnText = document.getElementById('btnExportText');
+            const btnIcon = document.getElementById('btnExportIcon');
+            
             if (code !== EXPORT_ACCESS_CODE) {
-                errorEl.classList.remove('hidden'); inputEl.classList.add('border-red-500', 'shake');
-                setTimeout(() => inputEl.classList.remove('shake'), 500); inputEl.select(); return;
+                errorEl.classList.remove('hidden'); 
+                inputEl.classList.add('border-red-500', 'shake');
+                setTimeout(() => inputEl.classList.remove('shake'), 500); 
+                inputEl.select(); 
+                return;
             }
+
             const exportType = document.querySelector('input[name="exportType"]:checked').value;
+            
             if (exportType === 'historical') {
                 const targetDate = document.getElementById('exportHistoricalDate').value;
                 if (!targetDate) { alert('Silakan pilih tanggal terlebih dahulu!'); return; }
-                btn.disabled = true; btn.innerHTML = `<span class="animate-pulse">Memuat Data...</span>`;
+                
+                // ✅ PERBAIKAN: Tampilkan loading tanpa merusak struktur DOM
+                btn.disabled = true;
+                btnText.textContent = 'Memuat Data...';
+                btnIcon.style.display = 'none';
+                
                 try {
                     const historicalData = await fetchHistoricalData(targetDate, activeTab);
                     if (historicalData.length === 0) {
                         const dateObj = new Date(targetDate + 'T00:00:00');
                         const dateFormatted = dateObj.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                         alert(`Tidak ada data ditemukan untuk tanggal ${dateFormatted}.\n\nKemungkinan penyebab:\n1. Belum ada data presensi untuk tanggal tersebut\n2. Format tanggal di spreadsheet berbeda\n3. Spreadsheet Log belum terisi data`);
-                        btn.disabled = false; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh Excel</span>`;
+                        // ✅ Reset tombol
+                        btn.disabled = false;
+                        btnText.textContent = 'Unduh Excel';
+                        btnIcon.style.display = 'inline';
                         return;
                     }
                     exportToExcel(historicalData, targetDate);
                     closeExportModal();
                 } catch (err) {
                     console.error('Export error:', err);
-                    alert('Gagal mengambil data historis. Pastikan spreadsheet dapat diakses (Siapa saja yang memiliki link dapat melihat).\n\nError: ' + err.message);
-                    btn.disabled = false; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh Excel</span>`;
+                    alert('Gagal mengambil data historis. Pastikan spreadsheet dapat diakses.\n\nError: ' + err.message);
+                    // ✅ Reset tombol
+                    btn.disabled = false;
+                    btnText.textContent = 'Unduh Excel';
+                    btnIcon.style.display = 'inline';
+                }
+            } else if (exportType === 'all') {
+                // ✅ OPSI BARU: Unduh semua data dari sheet Log
+                btn.disabled = true;
+                btnText.textContent = 'Memuat Data...';
+                btnIcon.style.display = 'none';
+                
+                try {
+                    const allData = await fetchAllLogData(activeTab);
+                    if (allData.length === 0) {
+                        alert('Tidak ada data ditemukan di sheet Log.');
+                        btn.disabled = false;
+                        btnText.textContent = 'Unduh Excel';
+                        btnIcon.style.display = 'inline';
+                        return;
+                    }
+                    exportToExcel(allData, 'semua_data');
+                    closeExportModal();
+                } catch (err) {
+                    console.error('Export error:', err);
+                    alert('Gagal mengambil semua data. Pastikan spreadsheet dapat diakses.\n\nError: ' + err.message);
+                    btn.disabled = false;
+                    btnText.textContent = 'Unduh Excel';
+                    btnIcon.style.display = 'inline';
                 }
             } else {
+                // Export data saat ini
                 exportToExcel(null, null);
                 closeExportModal();
             }
         }
 
-        // ✅ FUNGSI PERBAIKAN: Menangani struktur kolom berbeda untuk LogAbsensi dan LogIzin
         async function fetchHistoricalData(targetDate, type) {
             const gid = type === 'hadir' ? LOG_GID_HADIR : LOG_GID_IZIN;
             const url = `https://docs.google.com/spreadsheets/d/${LOG_SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
@@ -618,7 +712,6 @@
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
                     if (type === 'hadir') {
-                        // ✅ LogAbsensi: Kolom "Nama Siswa" (bukan "Nama")
                         result.push({
                             tanggal: getVal(row, 'tanggal'),
                             nama: getVal(row, 'nama siswa'),
@@ -629,7 +722,6 @@
                             jarak: getVal(row, 'jarak')
                         });
                     } else {
-                        // ✅ LogIzin: Kolom "Nama" (bukan "Nama Siswa"), "Jenis Izin", "Foto URL"
                         result.push({
                             tanggal: getVal(row, 'tanggal'),
                             nama: getVal(row, 'nama'),
@@ -643,15 +735,9 @@
                     }
                 }
 
-                console.log('Target date:', targetDate);
-                console.log('Total rows before filter:', result.length);
-
                 const filtered = result.filter(row => {
                     if (!row.tanggal) return false;
                     let rowDateStr = row.tanggal;
-                    console.log('Row date raw:', rowDateStr);
-
-                    // ✅ Handle format tanggal DD/MM/YYYY HH:MM:SS atau DD/MM/YYYY
                     if (rowDateStr.includes('/')) {
                         const parts = rowDateStr.split(' ')[0].split('/');
                         if (parts.length === 3) {
@@ -661,16 +747,69 @@
                             rowDateStr = `${year}-${month}-${day}`;
                         }
                     }
-
-                    console.log('Row date normalized:', rowDateStr, 'Target:', targetDate);
                     return rowDateStr.startsWith(targetDate);
                 });
 
-                console.log('Filtered rows:', filtered.length);
                 return filtered;
-
             } catch (error) {
                 console.error('Error fetching historical data:', error);
+                throw error;
+            }
+        }
+
+        // ✅ FUNGSI BARU: Mengambil SEMUA data dari sheet Log
+        async function fetchAllLogData(type) {
+            const gid = type === 'hadir' ? LOG_GID_HADIR : LOG_GID_IZIN;
+            const url = `https://docs.google.com/spreadsheets/d/${LOG_SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const jsonString = text.substring(47).slice(0, -2);
+                const json = JSON.parse(jsonString);
+
+                const cols = json.table.cols.map(c => (c.label || '').toLowerCase());
+                const rows = json.table.rows;
+                const result = [];
+
+                const getVal = (row, colName) => {
+                    const idx = cols.indexOf(colName.toLowerCase());
+                    if (idx === -1) return '';
+                    const cell = row.c[idx];
+                    if (!cell || cell.v === null) return '';
+                    if (cell.f) return cell.f;
+                    return String(cell.v);
+                };
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (type === 'hadir') {
+                        result.push({
+                            tanggal: getVal(row, 'tanggal'),
+                            nama: getVal(row, 'nama siswa'),
+                            kelas: getVal(row, 'kelas'),
+                            jurusan: getVal(row, 'jurusan'),
+                            waktu: getVal(row, 'waktu'),
+                            koordinat: getVal(row, 'koordinat'),
+                            jarak: getVal(row, 'jarak')
+                        });
+                    } else {
+                        result.push({
+                            tanggal: getVal(row, 'tanggal'),
+                            nama: getVal(row, 'nama'),
+                            kelas: getVal(row, 'kelas'),
+                            jurusan: getVal(row, 'jurusan'),
+                            waktu: getVal(row, 'waktu'),
+                            jenis_izin: getVal(row, 'jenis izin'),
+                            keterangan: getVal(row, 'keterangan'),
+                            bukti: getVal(row, 'foto url')
+                        });
+                    }
+                }
+
+                return result;
+            } catch (error) {
+                console.error('Error fetching all log data:', error);
                 throw error;
             }
         }
@@ -678,59 +817,68 @@
         function exportToExcel(customData = null, customDate = null) {
             const store = dataStore[activeTab];
             const data = customData || store.filtered;
-            const tanggalFile = customDate || new Date().toISOString().slice(0, 10);
-            const tanggalHuman = customDate
-                ? new Date(customDate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-                : new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
+            
+            let tanggalFile, tanggalHuman;
+            if (customDate === 'semua_data') {
+                tanggalFile = 'Semua_Data';
+                tanggalHuman = 'Semua Data Historis';
+            } else if (customDate) {
+                tanggalFile = customDate;
+                const dateObj = new Date(customDate + 'T00:00:00');
+                tanggalHuman = dateObj.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            } else {
+                tanggalFile = new Date().toISOString().slice(0, 10);
+                tanggalHuman = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+            
             let headers, excelData, fileName, sheetName;
-
+            
             if (activeTab === 'hadir') {
-                headers = ['No', 'Nama', 'Kelas', 'Jurusan', 'Waktu', 'Koordinat', 'Jarak'];
+                headers = ['No', 'Tanggal', 'Nama', 'Kelas', 'Jurusan', 'Waktu', 'Koordinat', 'Jarak'];
                 sheetName = 'Daftar Hadir';
                 fileName = `Daftar_Hadir_${tanggalFile}.xlsx`;
                 excelData = [headers];
                 data.forEach((row, idx) => {
-                    excelData.push([idx + 1, row.nama || '', row.kelas || '', row.jurusan || '', row.waktu || '', row.koordinat || '', row.jarak || '']);
+                    excelData.push([idx + 1, row.tanggal || '', row.nama || '', row.kelas || '', row.jurusan || '', row.waktu || '', row.koordinat || '', row.jarak || '']);
                 });
             } else {
-                headers = ['No', 'Nama', 'Kelas', 'Jurusan', 'Jenis Izin', 'Keterangan', 'Bukti', 'Waktu'];
+                headers = ['No', 'Tanggal', 'Nama', 'Kelas', 'Jurusan', 'Jenis Izin', 'Keterangan', 'Bukti', 'Waktu'];
                 sheetName = 'Daftar Izin';
                 fileName = `Daftar_Izin_${tanggalFile}.xlsx`;
                 excelData = [headers];
                 data.forEach((row, idx) => {
-                    excelData.push([idx + 1, row.nama || '', row.kelas || '', row.jurusan || '', row.jenis_izin || '', row.keterangan || '', row.bukti || '', row.waktu || '']);
+                    excelData.push([idx + 1, row.tanggal || '', row.nama || '', row.kelas || '', row.jurusan || '', row.jenis_izin || '', row.keterangan || '', row.bukti || '', row.waktu || '']);
                 });
             }
-
+            
             const wb = XLSX.utils.book_new();
             const headerInfo = [
                 ['DAFTAR ' + (activeTab === 'hadir' ? 'HADIR' : 'IZIN') + ' E-PRESENSI'],
                 ['SMK NEGERI 2 TEGALSARI'],
-                ['Tanggal: ' + tanggalHuman],
+                ['Periode: ' + tanggalHuman],
                 ['Total Data: ' + data.length + ' siswa'],
                 []
             ];
-
+            
             const finalData = [...headerInfo, ...excelData];
             const wsFinal = XLSX.utils.aoa_to_sheet(finalData);
-
+            
             const colWidths = headers.map((h, i) => {
-                if (i === 1) return { wch: 30 };
-                if (i === 5 && activeTab === 'izin') return { wch: 40 };
-                if (i === 6 && activeTab === 'izin') return { wch: 50 };
-                if (i === 5 && activeTab === 'hadir') return { wch: 25 };
+                if (i === 2) return { wch: 30 };
+                if (i === 6 && activeTab === 'izin') return { wch: 40 };
+                if (i === 7 && activeTab === 'izin') return { wch: 50 };
+                if (i === 6 && activeTab === 'hadir') return { wch: 25 };
                 return { wch: Math.max(h.length + 2, 12) };
             });
             wsFinal['!cols'] = colWidths;
-
+            
             for (let c = 0; c < headers.length; c++) {
                 const cellA1 = wsFinal[XLSX.utils.encode_cell({ r: 0, c: c })];
                 const cellA2 = wsFinal[XLSX.utils.encode_cell({ r: 1, c: c })];
                 if (cellA1) cellA1.s = { font: { bold: true, sz: 14 }, alignment: { horizontal: 'center' } };
                 if (cellA2) cellA2.s = { font: { bold: true, sz: 12 }, alignment: { horizontal: 'center' } };
             }
-
+            
             const headerRowIndex = headerInfo.length;
             for (let c = 0; c < headers.length; c++) {
                 const cell = wsFinal[XLSX.utils.encode_cell({ r: headerRowIndex, c: c })];
@@ -743,7 +891,7 @@
                     };
                 }
             }
-
+            
             if (activeTab === 'izin') {
                 const buktiColIdx = headers.indexOf('Bukti');
                 for (let i = 0; i < data.length; i++) {
@@ -756,7 +904,7 @@
                     }
                 }
             }
-
+            
             if (activeTab === 'hadir') {
                 const koordinatColIdx = headers.indexOf('Koordinat');
                 for (let i = 0; i < data.length; i++) {
@@ -772,7 +920,7 @@
                     }
                 }
             }
-
+            
             XLSX.utils.book_append_sheet(wb, wsFinal, sheetName);
             XLSX.writeFile(wb, fileName);
             showExportSuccess(fileName);
