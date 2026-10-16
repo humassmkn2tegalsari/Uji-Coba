@@ -26,6 +26,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ✅ Library SheetJS untuk Export Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         .font-modern { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-times { font-family: "Times New Roman", Times, serif; }
@@ -176,9 +178,118 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* ✅ Modal Export Styles */
+        .modal-backdrop {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .modal-slide-in {
+            animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .code-input {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.3em;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
+
+    <!-- ✅ MODAL VALIDASI KODE EXPORT -->
+    <div id="exportModal" class="hidden fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden modal-slide-in shadow-2xl font-modern">
+            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full"></div>
+                <div class="relative flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-white tracking-tight">Export ke Excel</h2>
+                        <p class="text-[10px] font-bold text-white/80 uppercase tracking-widest">Validasi Kode Akses</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-start gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600 flex-shrink-0 mt-0.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <p class="text-[11px] font-bold text-emerald-700 leading-tight">Masukkan kode akses khusus untuk mengunduh data presensi dalam format Excel.</p>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        Kode Akses
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="exportCodeInput" class="code-input w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter') confirmExport()">
+                        <button type="button" onclick="toggleExportCodeVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <svg id="toggleExportIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="exportCodeError" class="hidden text-[11px] font-bold text-red-500 flex items-center gap-1 mt-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span>Kode akses salah! Silakan coba lagi.</span>
+                    </p>
+                </div>
+                <div id="exportInfo" class="bg-slate-50 p-3 rounded-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data yang akan diunduh:</p>
+                    <p id="exportInfoText" class="text-xs font-bold text-slate-700">-</p>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50/80 border-t border-slate-100 flex gap-3">
+                <button type="button" onclick="closeExportModal()" class="flex-1 py-3.5 bg-white border-2 border-slate-200 text-slate-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">
+                    Batal
+                </button>
+                <button type="button" id="btnConfirmExport" onclick="confirmExport()" class="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-teal-600 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>Unduh Excel</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <div class="flex flex-col sm:flex-row items-center font-times border-b-4 border-black pb-4 mb-8 text-center">
@@ -255,11 +366,22 @@
             <div id="data-container" class="hidden">
                 
                 <div id="filter-container" class="p-4 bg-gray-50/80 border-b border-gray-200 font-modern">
-                    <div class="flex items-center mb-3 gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                        </svg>
-                        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Filter Data</h3>
+                    <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Filter Data</h3>
+                        </div>
+                        <!-- ✅ Tombol Export Excel -->
+                        <button onclick="openExportModal()" id="btn-export" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:from-emerald-600 hover:to-teal-600 transition active:scale-95 shadow-md shadow-emerald-500/20">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Export Excel
+                        </button>
                     </div>
                     <div id="filter-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
@@ -345,7 +467,11 @@
             bukti: 9
         };
 
-        const ROWS_PER_PAGE = 20;
+        // ✅ Diubah dari 20 menjadi 10
+        const ROWS_PER_PAGE = 10;
+        
+        // ✅ Kode Akses Khusus untuk Export
+        const EXPORT_ACCESS_CODE = "69921069";
 
         const loadingState = document.getElementById('loading-state');
         const errorState = document.getElementById('error-state');
@@ -752,7 +878,6 @@
 
                     const tdJarak = document.createElement('td');
                     tdJarak.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    // ✅ Kolom Jarak dikembalikan ke kondisi awal (tanpa tambahan satuan)
                     tdJarak.textContent = data.jarak || '-';
                     tr.appendChild(tdJarak);
                 } else {
@@ -874,6 +999,242 @@
             dataContainer.classList.add('hidden');
             errorMessage.textContent = msg;
         }
+
+        // ✅ FUNGSI-FUNGSI EXPORT EXCEL
+        function openExportModal() {
+            const store = dataStore[activeTab];
+            if (store.filtered.length === 0) {
+                alert('Tidak ada data yang dapat diekspor. Silakan sesuaikan filter Anda.');
+                return;
+            }
+            
+            const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
+            const tanggalStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            document.getElementById('exportInfoText').innerHTML = `
+                <div class="flex flex-col gap-1">
+                    <span>📋 ${labelData} - ${tanggalStr}</span>
+                    <span>📊 Total: <strong>${store.filtered.length}</strong> data${store.filtered.length !== store.all.length ? ` (dari ${store.all.length} data keseluruhan)` : ''}</span>
+                </div>
+            `;
+            
+            document.getElementById('exportCodeInput').value = '';
+            document.getElementById('exportCodeError').classList.add('hidden');
+            document.getElementById('exportCodeInput').classList.remove('border-red-500');
+            document.getElementById('exportModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            setTimeout(() => document.getElementById('exportCodeInput').focus(), 100);
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function toggleExportCodeVisibility() {
+            const input = document.getElementById('exportCodeInput');
+            const icon = document.getElementById('toggleExportIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        }
+
+        function confirmExport() {
+            const code = document.getElementById('exportCodeInput').value.trim();
+            const errorEl = document.getElementById('exportCodeError');
+            const inputEl = document.getElementById('exportCodeInput');
+            
+            if (code === EXPORT_ACCESS_CODE) {
+                errorEl.classList.add('hidden');
+                inputEl.classList.remove('border-red-500');
+                exportToExcel();
+                closeExportModal();
+            } else {
+                errorEl.classList.remove('hidden');
+                inputEl.classList.add('border-red-500');
+                inputEl.classList.add('shake');
+                setTimeout(() => inputEl.classList.remove('shake'), 500);
+                inputEl.select();
+            }
+        }
+
+        function exportToExcel() {
+            const store = dataStore[activeTab];
+            const data = store.filtered;
+            const tanggalFile = new Date().toISOString().slice(0, 10);
+            const tanggalHuman = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            let headers, excelData, fileName, sheetName;
+            
+            if (activeTab === 'hadir') {
+                headers = ['No', 'Nama', 'Kelas', 'Jurusan', 'Waktu', 'Koordinat', 'Jarak'];
+                sheetName = 'Daftar Hadir';
+                fileName = `Daftar_Hadir_${tanggalFile}.xlsx`;
+                
+                excelData = [headers];
+                data.forEach((row, idx) => {
+                    excelData.push([
+                        idx + 1,
+                        row.nama || '',
+                        row.kelas || '',
+                        row.jurusan || '',
+                        row.waktu || '',
+                        row.koordinat || '',
+                        row.jarak || ''
+                    ]);
+                });
+            } else {
+                headers = ['No', 'Nama', 'Kelas', 'Jurusan', 'Jenis Izin', 'Keterangan', 'Bukti', 'Waktu'];
+                sheetName = 'Daftar Izin';
+                fileName = `Daftar_Izin_${tanggalFile}.xlsx`;
+                
+                excelData = [headers];
+                data.forEach((row, idx) => {
+                    excelData.push([
+                        idx + 1,
+                        row.nama || '',
+                        row.kelas || '',
+                        row.jurusan || '',
+                        row.jenis_izin || '',
+                        row.keterangan || '',
+                        row.bukti || '',
+                        row.waktu || ''
+                    ]);
+                });
+            }
+            
+            // Buat workbook dan worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            
+            // Tambahkan header informasi di bagian atas sheet (geser data ke bawah)
+            const headerInfo = [
+                ['DAFTAR ' + (activeTab === 'hadir' ? 'HADIR' : 'IZIN') + ' E-PRESENSI'],
+                ['SMK NEGERI 2 TEGALSARI'],
+                ['Tanggal: ' + tanggalHuman],
+                ['Total Data: ' + data.length + ' siswa'],
+                []
+            ];
+            
+            const finalData = [...headerInfo, ...excelData];
+            const wsFinal = XLSX.utils.aoa_to_sheet(finalData);
+            
+            // Atur lebar kolom
+            const colWidths = headers.map((h, i) => {
+                if (i === 1) return { wch: 30 }; // Nama
+                if (i === 5 && activeTab === 'izin') return { wch: 40 }; // Keterangan
+                if (i === 6 && activeTab === 'izin') return { wch: 50 }; // Bukti
+                if (i === 5 && activeTab === 'hadir') return { wch: 25 }; // Koordinat
+                return { wch: Math.max(h.length + 2, 12) };
+            });
+            wsFinal['!cols'] = colWidths;
+            
+            // Style header judul (baris 0-3)
+            for (let c = 0; c < headers.length; c++) {
+                const cellA1 = wsFinal[XLSX.utils.encode_cell({ r: 0, c: c })];
+                const cellA2 = wsFinal[XLSX.utils.encode_cell({ r: 1, c: c })];
+                if (cellA1) cellA1.s = { font: { bold: true, sz: 14 }, alignment: { horizontal: 'center' } };
+                if (cellA2) cellA2.s = { font: { bold: true, sz: 12 }, alignment: { horizontal: 'center' } };
+            }
+            
+            // Style header kolom (baris ke-5, index 5 karena ada 4 baris info + 1 baris kosong)
+            const headerRowIndex = headerInfo.length;
+            for (let c = 0; c < headers.length; c++) {
+                const cell = wsFinal[XLSX.utils.encode_cell({ r: headerRowIndex, c: c })];
+                if (cell) {
+                    cell.s = {
+                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                        fill: { fgColor: { rgb: "3B82F6" } },
+                        alignment: { horizontal: "center" },
+                        border: {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        }
+                    };
+                }
+            }
+            
+            // Jadikan URL di kolom Bukti (tab Izin) menjadi hyperlink di Excel
+            if (activeTab === 'izin') {
+                const buktiColIdx = headers.indexOf('Bukti');
+                for (let i = 0; i < data.length; i++) {
+                    const rowIndex = headerRowIndex + 1 + i;
+                    const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: buktiColIdx });
+                    const cell = wsFinal[cellAddress];
+                    if (cell && cell.v) {
+                        const urls = String(cell.v).split(/[,|]/).map(u => u.trim()).filter(u => u.startsWith('http'));
+                        if (urls.length > 0) {
+                            cell.l = { Target: urls[0] };
+                            cell.s = { font: { color: { rgb: "0000FF" }, u: "single" } };
+                        }
+                    }
+                }
+            }
+            
+            // Jadikan koordinat (tab Hadir) menjadi hyperlink ke Google Maps
+            if (activeTab === 'hadir') {
+                const koordinatColIdx = headers.indexOf('Koordinat');
+                for (let i = 0; i < data.length; i++) {
+                    const rowIndex = headerRowIndex + 1 + i;
+                    const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: koordinatColIdx });
+                    const cell = wsFinal[cellAddress];
+                    if (cell && cell.v && String(cell.v).includes(',')) {
+                        const coords = String(cell.v).split(',').map(c => c.trim());
+                        if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                            cell.l = { Target: `https://www.google.com/maps?q=${coords[0]},${coords[1]}` };
+                            cell.s = { font: { color: { rgb: "0000FF" }, u: "single" } };
+                        }
+                    }
+                }
+            }
+            
+            XLSX.utils.book_append_sheet(wb, wsFinal, sheetName);
+            XLSX.writeFile(wb, fileName);
+            
+            // Tampilkan notifikasi sukses sederhana
+            showExportSuccess(fileName);
+        }
+
+        function showExportSuccess(fileName) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-6 right-6 z-[200] bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-modern modal-slide-in';
+            toast.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <div>
+                    <p class="font-black text-sm">Export Berhasil!</p>
+                    <p class="text-[11px] opacity-90">${fileName}</p>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Tutup modal saat klik di luar
+        document.getElementById('exportModal').addEventListener('click', (e) => {
+            if (e.target.id === 'exportModal') closeExportModal();
+        });
+
+        // Tutup modal dengan tombol Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.getElementById('exportModal').classList.contains('hidden')) {
+                closeExportModal();
+            }
+        });
 
         window.onload = fetchAllData;
     </script>
