@@ -26,7 +26,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ✅ Library SheetJS untuk Export Excel -->
+    <!-- Library SheetJS untuk Export Excel -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         .font-modern { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -179,7 +179,7 @@
             justify-content: center;
         }
 
-        /* ✅ Modal Export Styles */
+        /* Modal Export Styles */
         .modal-backdrop {
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(8px);
@@ -216,7 +216,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-    <!-- ✅ MODAL VALIDASI KODE EXPORT -->
+    <!-- MODAL VALIDASI KODE EXPORT -->
     <div id="exportModal" class="hidden fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden modal-slide-in shadow-2xl font-modern">
             <div class="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 relative overflow-hidden">
@@ -244,6 +244,32 @@
                     </svg>
                     <p class="text-[11px] font-bold text-emerald-700 leading-tight">Masukkan kode akses khusus untuk mengunduh data presensi dalam format Excel.</p>
                 </div>
+                
+                <!-- ✅ OPSI JENIS EXPORT (BARU) -->
+                <div class="space-y-3">
+                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pilih Jenis Data Export</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="exportType" value="current" checked onchange="toggleExportDateInput()" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
+                                <span class="text-xs font-bold text-slate-600 peer-checked:text-emerald-700">Data Saat Ini</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="exportType" value="historical" onchange="toggleExportDateInput()" class="hidden peer">
+                            <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
+                                <span class="text-xs font-bold text-slate-600 peer-checked:text-emerald-700">Tanggal Tertentu</span>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <!-- Input Tanggal (Hidden by default) -->
+                    <div id="historicalDateContainer" class="hidden space-y-2 mt-2 pt-2 border-t border-slate-100">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pilih Tanggal</label>
+                        <input type="date" id="exportHistoricalDate" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    </div each>
+                </div>
+
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -270,6 +296,7 @@
                         <span>Kode akses salah! Silakan coba lagi.</span>
                     </p>
                 </div>
+                
                 <div id="exportInfo" class="bg-slate-50 p-3 rounded-xl">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data yang akan diunduh:</p>
                     <p id="exportInfoText" class="text-xs font-bold text-slate-700">-</p>
@@ -285,7 +312,7 @@
                         <polyline points="7 10 12 15 17 10"/>
                         <line x1="12" y1="15" x2="12" y2="3"/>
                     </svg>
-                    <span>Unduh Excel</span>
+                    <span id="btnExportText">Unduh Excel</span>
                 </button>
             </div>
         </div>
@@ -373,7 +400,7 @@
                             </svg>
                             <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Filter Data</h3>
                         </div>
-                        <!-- ✅ Tombol Export Excel -->
+                        <!-- Tombol Export Excel -->
                         <button onclick="openExportModal()" id="btn-export" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:from-emerald-600 hover:to-teal-600 transition active:scale-95 shadow-md shadow-emerald-500/20">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -448,29 +475,15 @@
         const SHEET_CSV_URL_HADIR = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=0&single=true&output=csv';
         const SHEET_CSV_URL_IZIN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=457704213&single=true&output=csv';
 
-        const COLUMN_CONFIG_HADIR = {
-            nama: 8,
-            kelas: 9,
-            jurusan: 10,
-            waktu: 11,
-            koordinat: 12,
-            jarak: 13
-        };
+        // ✅ ID Spreadsheet Log Historis
+        const LOG_SHEET_ID = '1DzwFrT82LjZRqNlQ8l8d3q__pDPSaNsvFGFrhnXLMwI';
+        const LOG_GID_HADIR = '1817234920';
+        const LOG_GID_IZIN = '572353411';
 
-        const COLUMN_CONFIG_IZIN = {
-            nama: 1,
-            kelas: 2,
-            jurusan: 3,
-            waktu: 4,
-            jenis_izin: 7,
-            keterangan: 8,
-            bukti: 9
-        };
+        const COLUMN_CONFIG_HADIR = { nama: 8, kelas: 9, jurusan: 10, waktu: 11, koordinat: 12, jarak: 13 };
+        const COLUMN_CONFIG_IZIN = { nama: 1, kelas: 2, jurusan: 3, waktu: 4, jenis_izin: 7, keterangan: 8, bukti: 9 };
 
-        // ✅ Diubah dari 20 menjadi 10
         const ROWS_PER_PAGE = 10;
-        
-        // ✅ Kode Akses Khusus untuk Export
         const EXPORT_ACCESS_CODE = "69921069";
 
         const loadingState = document.getElementById('loading-state');
@@ -501,14 +514,8 @@
         let activeTab = 'hadir';
         
         const dataStore = {
-            hadir: {
-                all: [], filtered: [], currentPage: 1,
-                availableKelas: [], availableJurusan: []
-            },
-            izin: {
-                all: [], filtered: [], currentPage: 1,
-                availableKelas: [], availableJurusan: [], availableJenis: []
-            }
+            hadir: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [] },
+            izin: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [], availableJenis: [] }
         };
 
         filterNama.addEventListener('input', debounce(applyFilters, 300));
@@ -527,73 +534,41 @@
         async function fetchCSV(url) {
             const response = await fetch(`${url}&t=${new Date().getTime()}`, { cache: 'no-store' });
             if (!response.ok) throw new Error('Failed to fetch');
-            
             const csvText = await response.text();
             if (csvText.includes('<!DOCTYPE html>') || csvText.includes('login')) {
                 throw new Error('Akses Dibatasi (Publish to Web diperlukan)');
             }
-            
             return parseCSV(csvText);
         }
 
         function parseCSV(text) {
-            const rows = [];
-            let row = [];
-            let field = '';
-            let inQuotes = false;
-
+            const rows = []; let row = []; let field = ''; let inQuotes = false;
             for (let i = 0; i < text.length; i++) {
                 const c = text.charAt(i);
-
                 if (inQuotes) {
-                    if (c === '"') {
-                        if (text.charAt(i + 1) === '"') {
-                            field += '"';
-                            i++;
-                        } else {
-                            inQuotes = false;
-                        }
-                    } else {
-                        field += c;
-                    }
+                    if (c === '"') { if (text.charAt(i + 1) === '"') { field += '"'; i++; } else { inQuotes = false; } } 
+                    else { field += c; }
                 } else {
-                    if (c === '"') {
-                        inQuotes = true;
-                    } else if (c === ',') {
-                        row.push(field);
-                        field = '';
-                    } else if (c === '\n') {
-                        row.push(field);
-                        rows.push(row);
-                        row = [];
-                        field = '';
-                    } else if (c === '\r') {
-                        // Abaikan carriage return
-                    } else {
-                        field += c;
-                    }
+                    if (c === '"') { inQuotes = true; } 
+                    else if (c === ',') { row.push(field); field = ''; } 
+                    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; } 
+                    else if (c === '\r') { continue; } 
+                    else { field += c; }
                 }
             }
-
-            row.push(field);
-            rows.push(row);
-
+            row.push(field); rows.push(row);
             return rows;
         }
 
         function cleanCellValue(value) {
             if (!value) return '';
-            return value
-                .replace(/^"(.*)"$/, '$1')
-                .replace(/[\n\r]+/g, ' ')
-                .trim();
+            return value.replace(/^"(.*)"$/, '$1').replace(/[\n\r]+/g, ' ').trim();
         }
 
         function makeMultipleLinks(urlStr) {
             if (!urlStr || urlStr === '-') return '<span class="text-gray-400 text-xs">-</span>';
             const urls = String(urlStr).split(/[,|]/).map(u => u.trim()).filter(u => u.startsWith('http'));
             if (urls.length === 0) return '<span class="text-gray-400 text-xs">-</span>';
-            
             return urls.map((u, i) => 
                 `<a href="${u}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-bold text-xs transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -603,104 +578,47 @@
         }
 
         async function fetchAllData() {
-            loadingState.classList.remove('hidden');
-            errorState.classList.add('hidden');
-            dataContainer.classList.add('hidden');
-
+            loadingState.classList.remove('hidden'); errorState.classList.add('hidden'); dataContainer.classList.add('hidden');
             try {
-                const [resultHadir, resultIzin] = await Promise.allSettled([
-                    fetchCSV(SHEET_CSV_URL_HADIR),
-                    fetchCSV(SHEET_CSV_URL_IZIN)
-                ]);
-
-                if (resultHadir.status === 'fulfilled') {
-                    processDataHadir(resultHadir.value);
-                } else {
-                    dataStore.hadir.all = [];
-                }
-
-                if (resultIzin.status === 'fulfilled') {
-                    processDataIzin(resultIzin.value);
-                } else {
-                    dataStore.izin.all = [];
-                }
+                const [resultHadir, resultIzin] = await Promise.allSettled([fetchCSV(SHEET_CSV_URL_HADIR), fetchCSV(SHEET_CSV_URL_IZIN)]);
+                if (resultHadir.status === 'fulfilled') processDataHadir(resultHadir.value); else dataStore.hadir.all = [];
+                if (resultIzin.status === 'fulfilled') processDataIzin(resultIzin.value); else dataStore.izin.all = [];
 
                 badgeHadir.textContent = dataStore.hadir.all.length;
                 badgeIzin.textContent = dataStore.izin.all.length;
 
                 if (dataStore.hadir.all.length === 0 && dataStore.izin.all.length === 0) {
-                    showError('Tidak ada data yang tersedia.');
-                    return;
+                    showError('Tidak ada data yang tersedia.'); return;
                 }
-
                 renderCurrentTab();
-                loadingState.classList.add('hidden');
-                dataContainer.classList.remove('hidden');
-
-            } catch (error) {
-                showError(error.message);
-            }
+                loadingState.classList.add('hidden'); dataContainer.classList.remove('hidden');
+            } catch (error) { showError(error.message); }
         }
 
         function processDataHadir(rows) {
-            dataStore.hadir.all = [];
-            const kelasSet = new Set();
-            const jurusanSet = new Set();
-
+            dataStore.hadir.all = []; const kelasSet = new Set(), jurusanSet = new Set();
             for (let i = 4; i < rows.length; i++) {
                 if (!rows[i] || rows[i].join('').trim() === "") continue;
-                
-                const row = rows[i];
-                const namaCell = cleanCellValue(row[COLUMN_CONFIG_HADIR.nama]);
+                const row = rows[i]; const namaCell = cleanCellValue(row[COLUMN_CONFIG_HADIR.nama]);
                 if (!namaCell || namaCell === '""') continue;
-                
-                const data = {
-                    nama: namaCell,
-                    kelas: cleanCellValue(row[COLUMN_CONFIG_HADIR.kelas]),
-                    jurusan: cleanCellValue(row[COLUMN_CONFIG_HADIR.jurusan]),
-                    waktu: cleanCellValue(row[COLUMN_CONFIG_HADIR.waktu]),
-                    koordinat: cleanCellValue(row[COLUMN_CONFIG_HADIR.koordinat]),
-                    jarak: cleanCellValue(row[COLUMN_CONFIG_HADIR.jarak])
-                };
-
+                const data = { nama: namaCell, kelas: cleanCellValue(row[COLUMN_CONFIG_HADIR.kelas]), jurusan: cleanCellValue(row[COLUMN_CONFIG_HADIR.jurusan]), waktu: cleanCellValue(row[COLUMN_CONFIG_HADIR.waktu]), koordinat: cleanCellValue(row[COLUMN_CONFIG_HADIR.koordinat]), jarak: cleanCellValue(row[COLUMN_CONFIG_HADIR.jarak]) };
                 dataStore.hadir.all.push(data);
-                if (data.kelas) kelasSet.add(data.kelas);
-                if (data.jurusan) jurusanSet.add(data.jurusan);
+                if (data.kelas) kelasSet.add(data.kelas); if (data.jurusan) jurusanSet.add(data.jurusan);
             }
-
             dataStore.hadir.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
             dataStore.hadir.availableJurusan = Array.from(jurusanSet).sort();
         }
 
         function processDataIzin(rows) {
-            dataStore.izin.all = [];
-            const kelasSet = new Set();
-            const jurusanSet = new Set();
-            const jenisSet = new Set();
-
+            dataStore.izin.all = []; const kelasSet = new Set(), jurusanSet = new Set(), jenisSet = new Set();
             for (let i = 4; i < rows.length; i++) {
                 if (!rows[i] || rows[i].join('').trim() === "") continue;
-                
-                const row = rows[i];
-                const namaCell = cleanCellValue(row[COLUMN_CONFIG_IZIN.nama]);
+                const row = rows[i]; const namaCell = cleanCellValue(row[COLUMN_CONFIG_IZIN.nama]);
                 if (!namaCell || namaCell === '""') continue;
-                
-                const data = {
-                    nama: namaCell,
-                    kelas: cleanCellValue(row[COLUMN_CONFIG_IZIN.kelas]),
-                    jurusan: cleanCellValue(row[COLUMN_CONFIG_IZIN.jurusan]),
-                    waktu: cleanCellValue(row[COLUMN_CONFIG_IZIN.waktu]),
-                    jenis_izin: cleanCellValue(row[COLUMN_CONFIG_IZIN.jenis_izin]),
-                    keterangan: cleanCellValue(row[COLUMN_CONFIG_IZIN.keterangan]),
-                    bukti: cleanCellValue(row[COLUMN_CONFIG_IZIN.bukti])
-                };
-
+                const data = { nama: namaCell, kelas: cleanCellValue(row[COLUMN_CONFIG_IZIN.kelas]), jurusan: cleanCellValue(row[COLUMN_CONFIG_IZIN.jurusan]), waktu: cleanCellValue(row[COLUMN_CONFIG_IZIN.waktu]), jenis_izin: cleanCellValue(row[COLUMN_CONFIG_IZIN.jenis_izin]), keterangan: cleanCellValue(row[COLUMN_CONFIG_IZIN.keterangan]), bukti: cleanCellValue(row[COLUMN_CONFIG_IZIN.bukti]) };
                 dataStore.izin.all.push(data);
-                if (data.kelas) kelasSet.add(data.kelas);
-                if (data.jurusan) jurusanSet.add(data.jurusan);
-                if (data.jenis_izin) jenisSet.add(data.jenis_izin);
+                if (data.kelas) kelasSet.add(data.kelas); if (data.jurusan) jurusanSet.add(data.jurusan); if (data.jenis_izin) jenisSet.add(data.jenis_izin);
             }
-
             dataStore.izin.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id'));
             dataStore.izin.availableJurusan = Array.from(jurusanSet).sort();
             dataStore.izin.availableJenis = Array.from(jenisSet).sort();
@@ -708,222 +626,109 @@
 
         function switchTab(tab) {
             if (tab === activeTab) return;
-            
-            activeTab = tab;
-            const isIzin = (tab === 'izin');
-            
+            activeTab = tab; const isIzin = (tab === 'izin');
             document.getElementById('tab-hadir').classList.toggle('active', !isIzin);
             document.getElementById('tab-izin').classList.toggle('active', isIzin);
-            
-            if (isIzin) {
-                reportTitle.innerHTML = 'DAFTAR IZIN E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
-            } else {
-                reportTitle.innerHTML = 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
-            }
-
+            reportTitle.innerHTML = isIzin ? 'DAFTAR IZIN E-PRESENSI<br>SMK NEGERI 2 TEGALSARI' : 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI';
             document.getElementById('filter-jenis-container').classList.toggle('hidden', !isIzin);
-
-            filterGrid.classList.toggle('lg:grid-cols-4', !isIzin);
-            filterGrid.classList.toggle('lg:grid-cols-5', isIzin);
-
-            resetFilters(true);
-            renderCurrentTab();
+            filterGrid.classList.toggle('lg:grid-cols-4', !isIzin); filterGrid.classList.toggle('lg:grid-cols-5', isIzin);
+            resetFilters(true); renderCurrentTab();
         }
 
         function renderCurrentTab() {
             const store = dataStore[activeTab];
-            
             populateDropdown(filterKelas, store.availableKelas, 'Semua Kelas');
             populateDropdown(filterJurusan, store.availableJurusan, 'Semua Jurusan');
-            
-            if (activeTab === 'izin') {
-                populateDropdown(filterJenis, store.availableJenis, 'Semua Jenis');
-            }
-
+            if (activeTab === 'izin') populateDropdown(filterJenis, store.availableJenis, 'Semua Jenis');
             applyFilters();
         }
 
         function populateDropdown(selectElement, optionsList, defaultText) {
             selectElement.innerHTML = `<option value="">${defaultText}</option>`;
             optionsList.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = opt;
-                selectElement.appendChild(option);
+                const option = document.createElement('option'); option.value = opt; option.textContent = opt; selectElement.appendChild(option);
             });
         }
 
         function applyFilters() {
             const store = dataStore[activeTab];
             const searchNama = filterNama.value.trim().toLowerCase();
-            const selectedKelas = filterKelas.value;
-            const selectedJurusan = filterJurusan.value;
-            const selectedJenis = filterJenis.value;
-
+            const selectedKelas = filterKelas.value; const selectedJurusan = filterJurusan.value; const selectedJenis = filterJenis.value;
             store.filtered = store.all.filter(data => {
                 const matchNama = !searchNama || data.nama.toLowerCase().includes(searchNama);
                 const matchKelas = !selectedKelas || data.kelas === selectedKelas;
                 const matchJurusan = !selectedJurusan || data.jurusan === selectedJurusan;
-                
                 if (activeTab === 'izin') {
                     const matchJenis = !selectedJenis || data.jenis_izin === selectedJenis;
                     return matchNama && matchKelas && matchJurusan && matchJenis;
                 }
-                
                 return matchNama && matchKelas && matchJurusan;
             });
-
             const labelData = activeTab === 'hadir' ? 'data presensi' : 'data izin';
             if (searchNama || selectedKelas || selectedJurusan || selectedJenis) {
                 filterResult.textContent = `Ditemukan ${store.filtered.length} dari ${store.all.length} ${labelData}`;
-                filterResult.classList.add('text-blue-600');
-                filterResult.classList.remove('text-gray-500');
+                filterResult.classList.add('text-blue-600'); filterResult.classList.remove('text-gray-500');
             } else {
                 filterResult.textContent = `Total ${store.all.length} ${labelData}`;
-                filterResult.classList.remove('text-blue-600');
-                filterResult.classList.add('text-gray-500');
+                filterResult.classList.remove('text-blue-600'); filterResult.classList.add('text-gray-500');
             }
-
-            store.currentPage = 1;
-            renderTable();
+            store.currentPage = 1; renderTable();
         }
 
         function resetFilters(silent = false) {
-            filterNama.value = '';
-            filterKelas.value = '';
-            filterJurusan.value = '';
-            filterJenis.value = '';
+            filterNama.value = ''; filterKelas.value = ''; filterJurusan.value = ''; filterJenis.value = '';
             if (!silent) applyFilters();
         }
 
         function renderTable() {
-            tableHead.innerHTML = '';
-            tableBody.innerHTML = '';
-            
+            tableHead.innerHTML = ''; tableBody.innerHTML = '';
             const store = dataStore[activeTab];
-
-            let manualHeaders;
-            if (activeTab === 'hadir') {
-                manualHeaders = ["No", "Nama", "Kelas", "Jurusan", "Waktu", "Koordinat", "Jarak"];
-            } else {
-                manualHeaders = ["No", "Nama", "Kelas", "Jurusan", "Jenis Izin", "Keterangan", "Bukti", "Waktu"];
-            }
-
+            const manualHeaders = activeTab === 'hadir' ? ["No", "Nama", "Kelas", "Jurusan", "Waktu", "Koordinat", "Jarak"] : ["No", "Nama", "Kelas", "Jurusan", "Jenis Izin", "Keterangan", "Bukti", "Waktu"];
             manualHeaders.forEach((headerText) => {
                 const th = document.createElement('th');
                 th.className = `px-4 py-4 text-sm font-extrabold text-gray-700 border-b border-gray-200 uppercase text-center tracking-widest bg-gray-50/50 whitespace-nowrap`;
-                th.textContent = headerText;
-                tableHead.appendChild(th);
+                th.textContent = headerText; tableHead.appendChild(th);
             });
-
-            if (store.filtered.length === 0) {
-                emptyState.classList.add('active');
-                document.getElementById('pagination-container').classList.add('hidden');
-                return;
-            }
+            if (store.filtered.length === 0) { emptyState.classList.add('active'); document.getElementById('pagination-container').classList.add('hidden'); return; }
             emptyState.classList.remove('active');
-
             const totalPages = Math.ceil(store.filtered.length / ROWS_PER_PAGE);
             const startIndex = (store.currentPage - 1) * ROWS_PER_PAGE;
             const endIndex = Math.min(startIndex + ROWS_PER_PAGE, store.filtered.length);
             const pageRows = store.filtered.slice(startIndex, endIndex);
-
             pageRows.forEach((data, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-blue-50/30 transition-colors';
-                
-                const tdNo = document.createElement('td');
-                tdNo.className = 'px-4 py-4 text-sm font-medium text-gray-400 text-center w-12';
-                tdNo.textContent = startIndex + index + 1;
-                tr.appendChild(tdNo);
-
-                const tdNama = document.createElement('td');
-                tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium';
-                tdNama.textContent = data.nama;
-                tr.appendChild(tdNama);
-
+                const tr = document.createElement('tr'); tr.className = 'hover:bg-blue-50/30 transition-colors';
+                const tdNo = document.createElement('td'); tdNo.className = 'px-4 py-4 text-sm font-medium text-gray-400 text-center w-12'; tdNo.textContent = startIndex + index + 1; tr.appendChild(tdNo);
+                const tdNama = document.createElement('td'); tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium'; tdNama.textContent = data.nama; tr.appendChild(tdNama);
                 if (activeTab === 'hadir') {
-                    const tdKelas = document.createElement('td');
-                    tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdKelas.textContent = data.kelas;
-                    tr.appendChild(tdKelas);
-
-                    const tdJurusan = document.createElement('td');
-                    tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJurusan.textContent = data.jurusan;
-                    tr.appendChild(tdJurusan);
-
-                    const tdWaktu = document.createElement('td');
-                    tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdWaktu.textContent = data.waktu;
-                    tr.appendChild(tdWaktu);
-
-                    const tdKoordinat = document.createElement('td');
-                    tdKoordinat.className = 'px-4 py-4 text-xs text-center text-gray-600 whitespace-nowrap';
-                    
+                    const tdKelas = document.createElement('td'); tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdKelas.textContent = data.kelas; tr.appendChild(tdKelas);
+                    const tdJurusan = document.createElement('td'); tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan);
+                    const tdWaktu = document.createElement('td'); tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdWaktu.textContent = data.waktu; tr.appendChild(tdWaktu);
+                    const tdKoordinat = document.createElement('td'); tdKoordinat.className = 'px-4 py-4 text-xs text-center text-gray-600 whitespace-nowrap';
                     if (data.koordinat && data.koordinat.includes(',')) {
                         const coords = data.koordinat.split(',').map(c => c.trim());
                         if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-                            tdKoordinat.innerHTML = `<a href="https://www.google.com/maps?q=${coords[0]},${coords[1]}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                Lihat Peta
-                            </a>`;
-                        } else {
-                            tdKoordinat.textContent = data.koordinat || '-';
-                        }
-                    } else {
-                        tdKoordinat.textContent = data.koordinat || '-';
-                    }
+                            tdKoordinat.innerHTML = `<a href="https://www.google.com/maps?q=${coords[0]},${coords[1]}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Lihat Peta</a>`;
+                        } else { tdKoordinat.textContent = data.koordinat || '-'; }
+                    } else { tdKoordinat.textContent = data.koordinat || '-'; }
                     tr.appendChild(tdKoordinat);
-
-                    const tdJarak = document.createElement('td');
-                    tdJarak.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJarak.textContent = data.jarak || '-';
-                    tr.appendChild(tdJarak);
+                    const tdJarak = document.createElement('td'); tdJarak.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdJarak.textContent = data.jarak || '-'; tr.appendChild(tdJarak);
                 } else {
-                    const tdKelas = document.createElement('td');
-                    tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdKelas.textContent = data.kelas;
-                    tr.appendChild(tdKelas);
-
-                    const tdJurusan = document.createElement('td');
-                    tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdJurusan.textContent = data.jurusan;
-                    tr.appendChild(tdJurusan);
-
-                    const tdJenis = document.createElement('td');
-                    tdJenis.className = 'px-4 py-4 text-center whitespace-nowrap';
-                    const badge = document.createElement('span');
-                    let badgeClass = 'bg-gray-100 text-gray-700';
+                    const tdKelas = document.createElement('td'); tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdKelas.textContent = data.kelas; tr.appendChild(tdKelas);
+                    const tdJurusan = document.createElement('td'); tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan);
+                    const tdJenis = document.createElement('td'); tdJenis.className = 'px-4 py-4 text-center whitespace-nowrap';
+                    const badge = document.createElement('span'); let badgeClass = 'bg-gray-100 text-gray-700';
                     const jenis = data.jenis_izin.toLowerCase();
                     if (jenis.includes('sakit')) badgeClass = 'bg-orange-100 text-orange-700';
                     else if (jenis.includes('force')) badgeClass = 'bg-purple-100 text-purple-700';
                     else if (jenis.includes('izin')) badgeClass = 'bg-blue-100 text-blue-700';
                     else if (jenis.includes('alpa')) badgeClass = 'bg-red-100 text-red-700';
-                    badge.className = `inline-block px-3 py-1 text-xs font-semibold rounded-full ${badgeClass}`;
-                    badge.textContent = data.jenis_izin;
-                    tdJenis.appendChild(badge);
-                    tr.appendChild(tdJenis);
-
-                    const tdKet = document.createElement('td');
-                    tdKet.className = 'px-4 py-4 text-sm text-left text-gray-600 min-w-[200px]';
-                    tdKet.textContent = data.keterangan || '-';
-                    tr.appendChild(tdKet);
-
-                    const tdBukti = document.createElement('td');
-                    tdBukti.className = 'px-4 py-4 text-sm text-center whitespace-nowrap';
-                    tdBukti.innerHTML = makeMultipleLinks(data.bukti);
-                    tr.appendChild(tdBukti);
-
-                    const tdWaktu = document.createElement('td');
-                    tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap';
-                    tdWaktu.textContent = data.waktu;
-                    tr.appendChild(tdWaktu);
+                    badge.className = `inline-block px-3 py-1 text-xs font-semibold rounded-full ${badgeClass}`; badge.textContent = data.jenis_izin; tdJenis.appendChild(badge); tr.appendChild(tdJenis);
+                    const tdKet = document.createElement('td'); tdKet.className = 'px-4 py-4 text-sm text-left text-gray-600 min-w-[200px]'; tdKet.textContent = data.keterangan || '-'; tr.appendChild(tdKet);
+                    const tdBukti = document.createElement('td'); tdBukti.className = 'px-4 py-4 text-sm text-center whitespace-nowrap'; tdBukti.innerHTML = makeMultipleLinks(data.bukti); tr.appendChild(tdBukti);
+                    const tdWaktu = document.createElement('td'); tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdWaktu.textContent = data.waktu; tr.appendChild(tdWaktu);
                 }
-                
                 tableBody.appendChild(tr);
             });
-
             renderPagination(totalPages);
         }
 
@@ -932,98 +737,75 @@
             const startIndex = (store.currentPage - 1) * ROWS_PER_PAGE + 1;
             const endIndex = Math.min(store.currentPage * ROWS_PER_PAGE, store.filtered.length);
             paginationInfo.innerHTML = `Menampilkan <span class="font-semibold text-gray-700">${startIndex}-${endIndex}</span> dari <span class="font-semibold text-gray-700">${store.filtered.length}</span> data`;
-
             paginationButtons.innerHTML = '';
-
-            if (totalPages <= 1) {
-                document.getElementById('pagination-container').classList.add('hidden');
-                return;
-            }
+            if (totalPages <= 1) { document.getElementById('pagination-container').classList.add('hidden'); return; }
             document.getElementById('pagination-container').classList.remove('hidden');
-
-            const prevBtn = document.createElement('button');
-            prevBtn.className = 'pagination-btn';
-            prevBtn.innerHTML = '&larr; Sebelumnya';
-            prevBtn.disabled = store.currentPage === 1;
-            prevBtn.onclick = () => goToPage(store.currentPage - 1);
-            paginationButtons.appendChild(prevBtn);
-
+            const prevBtn = document.createElement('button'); prevBtn.className = 'pagination-btn'; prevBtn.innerHTML = '&larr; Sebelumnya'; prevBtn.disabled = store.currentPage === 1; prevBtn.onclick = () => goToPage(store.currentPage - 1); paginationButtons.appendChild(prevBtn);
             const pageNumbers = getPageNumbers(store.currentPage, totalPages);
             pageNumbers.forEach(p => {
                 const btn = document.createElement('button');
-                if (p === '...') {
-                    btn.className = 'pagination-btn cursor-default';
-                    btn.textContent = '...';
-                    btn.disabled = true;
-                } else {
-                    btn.className = 'pagination-btn';
-                    if (p === store.currentPage) btn.classList.add('active');
-                    btn.textContent = p;
-                    btn.onclick = () => goToPage(p);
-                }
+                if (p === '...') { btn.className = 'pagination-btn cursor-default'; btn.textContent = '...'; btn.disabled = true; } 
+                else { btn.className = 'pagination-btn'; if (p === store.currentPage) btn.classList.add('active'); btn.textContent = p; btn.onclick = () => goToPage(p); }
                 paginationButtons.appendChild(btn);
             });
-
-            const nextBtn = document.createElement('button');
-            nextBtn.className = 'pagination-btn';
-            nextBtn.innerHTML = 'Selanjutnya &rarr;';
-            nextBtn.disabled = store.currentPage === totalPages;
-            nextBtn.onclick = () => goToPage(store.currentPage + 1);
-            paginationButtons.appendChild(nextBtn);
+            const nextBtn = document.createElement('button'); nextBtn.className = 'pagination-btn'; nextBtn.innerHTML = 'Selanjutnya &rarr;'; nextBtn.disabled = store.currentPage === totalPages; nextBtn.onclick = () => goToPage(store.currentPage + 1); paginationButtons.appendChild(nextBtn);
         }
 
         function getPageNumbers(current, total) {
-            if (total <= 7) {
-                return Array.from({ length: total }, (_, i) => i + 1);
-            }
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
             const pages = [];
-            if (current <= 3) {
-                pages.push(1, 2, 3, 4, '...', total);
-            } else if (current >= total - 2) {
-                pages.push(1, '...', total - 3, total - 2, total - 1, total);
-            } else {
-                pages.push(1, '...', current - 1, current, current + 1, '...', total);
-            }
+            if (current <= 3) pages.push(1, 2, 3, 4, '...', total);
+            else if (current >= total - 2) pages.push(1, '...', total - 3, total - 2, total - 1, total);
+            else pages.push(1, '...', current - 1, current, current + 1, '...', total);
             return pages;
         }
 
-        function goToPage(page) {
-            dataStore[activeTab].currentPage = page;
-            renderTable();
-            dataContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        function goToPage(page) { dataStore[activeTab].currentPage = page; renderTable(); dataContainer.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        function showError(msg) { loadingState.classList.add('hidden'); errorState.classList.remove('hidden'); dataContainer.classList.add('hidden'); errorMessage.textContent = msg; }
+
+        // ==========================================
+        // ✅ FUNGSI-FUNGSI EXPORT EXCEL (DIPERBARUI)
+        // ==========================================
+        
+        function toggleExportDateInput() {
+            const type = document.querySelector('input[name="exportType"]:checked').value;
+            const dateContainer = document.getElementById('historicalDateContainer');
+            if (type === 'historical') {
+                dateContainer.classList.remove('hidden');
+            } else {
+                dateContainer.classList.add('hidden');
+            }
         }
 
-        function showError(msg) {
-            loadingState.classList.add('hidden');
-            errorState.classList.remove('hidden');
-            dataContainer.classList.add('hidden');
-            errorMessage.textContent = msg;
-        }
-
-        // ✅ FUNGSI-FUNGSI EXPORT EXCEL
         function openExportModal() {
             const store = dataStore[activeTab];
-            if (store.filtered.length === 0) {
-                alert('Tidak ada data yang dapat diekspor. Silakan sesuaikan filter Anda.');
+            if (store.all.length === 0) {
+                alert('Tidak ada data yang dapat diekspor.');
                 return;
             }
             
-            const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
-            const tanggalStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            
-            document.getElementById('exportInfoText').innerHTML = `
-                <div class="flex flex-col gap-1">
-                    <span>📋 ${labelData} - ${tanggalStr}</span>
-                    <span>📊 Total: <strong>${store.filtered.length}</strong> data${store.filtered.length !== store.all.length ? ` (dari ${store.all.length} data keseluruhan)` : ''}</span>
-                </div>
-            `;
-            
+            // Reset state modal
+            document.querySelector('input[name="exportType"][value="current"]').checked = true;
+            toggleExportDateInput();
+            document.getElementById('exportHistoricalDate').value = '';
             document.getElementById('exportCodeInput').value = '';
             document.getElementById('exportCodeError').classList.add('hidden');
             document.getElementById('exportCodeInput').classList.remove('border-red-500');
+            document.getElementById('btnExportText').textContent = 'Unduh Excel';
+            document.getElementById('btnConfirmExport').disabled = false;
+            
+            // Update info text (Tanpa Ikon)
+            const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
+            const tanggalStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('exportInfoText').innerHTML = `
+                <div class="flex flex-col gap-1">
+                    <span>${labelData} - ${tanggalStr}</span>
+                    <span>Total: <strong>${store.filtered.length}</strong> data${store.filtered.length !== store.all.length ? ` (dari ${store.all.length} data keseluruhan)` : ''}</span>
+                </div>
+            `;
+            
             document.getElementById('exportModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            
             setTimeout(() => document.getElementById('exportCodeInput').focus(), 100);
         }
 
@@ -1044,30 +826,136 @@
             }
         }
 
-        function confirmExport() {
+        async function confirmExport() {
             const code = document.getElementById('exportCodeInput').value.trim();
             const errorEl = document.getElementById('exportCodeError');
             const inputEl = document.getElementById('exportCodeInput');
+            const btn = document.getElementById('btnConfirmExport');
             
-            if (code === EXPORT_ACCESS_CODE) {
-                errorEl.classList.add('hidden');
-                inputEl.classList.remove('border-red-500');
-                exportToExcel();
-                closeExportModal();
-            } else {
+            if (code !== EXPORT_ACCESS_CODE) {
                 errorEl.classList.remove('hidden');
-                inputEl.classList.add('border-red-500');
-                inputEl.classList.add('shake');
+                inputEl.classList.add('border-red-500', 'shake');
                 setTimeout(() => inputEl.classList.remove('shake'), 500);
                 inputEl.select();
+                return;
+            }
+
+            const exportType = document.querySelector('input[name="exportType"]:checked').value;
+            
+            if (exportType === 'historical') {
+                const targetDate = document.getElementById('exportHistoricalDate').value;
+                if (!targetDate) {
+                    alert('Silakan pilih tanggal terlebih dahulu!');
+                    return;
+                }
+                
+                // Tampilkan loading
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memuat Data...`;
+                
+                try {
+                    const historicalData = await fetchHistoricalData(targetDate, activeTab);
+                    if (historicalData.length === 0) {
+                        alert(`Tidak ada data ditemukan untuk tanggal ${targetDate}.`);
+                        btn.disabled = false;
+                        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh Excel</span>`;
+                        return;
+                    }
+                    exportToExcel(historicalData, targetDate);
+                    closeExportModal();
+                } catch (err) {
+                    alert('Gagal mengambil data historis. Pastikan spreadsheet dapat diakses (Siapa saja yang memiliki link dapat melihat).');
+                    console.error(err);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Unduh Excel</span>`;
+                }
+            } else {
+                // Export data saat ini
+                exportToExcel(null, null);
+                closeExportModal();
             }
         }
 
-        function exportToExcel() {
+        // ✅ FUNGSI BARU: Mengambil data dari Tab Log menggunakan Google Visualization API
+        async function fetchHistoricalData(targetDate, type) {
+            const gid = type === 'hadir' ? LOG_GID_HADIR : LOG_GID_IZIN;
+            const url = `https://docs.google.com/spreadsheets/d/${LOG_SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
+            
+            const response = await fetch(url);
+            const text = await response.text();
+            
+            // Bersihkan wrapper JSONP: /*O_o*/ google.visualization.Query.setResponse({...});
+            const jsonString = text.substring(47).slice(0, -2);
+            const json = JSON.parse(jsonString);
+            
+            const cols = json.table.cols.map(c => (c.label || '').toLowerCase());
+            const rows = json.table.rows;
+            const result = [];
+
+            const getVal = (row, colName) => {
+                const idx = cols.indexOf(colName.toLowerCase());
+                if (idx === -1) return '';
+                const cell = row.c[idx];
+                if (!cell || cell.v === null) return '';
+                if (cell.f) return cell.f; // Gunakan formatted string jika ada (misal: "25/10/2023")
+                return String(cell.v);
+            };
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (type === 'hadir') {
+                    result.push({
+                        tanggal: getVal(row, 'tanggal'),
+                        nama: getVal(row, 'nama'),
+                        kelas: getVal(row, 'kelas'),
+                        jurusan: getVal(row, 'jurusan'),
+                        waktu: getVal(row, 'waktu'),
+                        koordinat: getVal(row, 'koordinat'),
+                        jarak: getVal(row, 'jarak')
+                    });
+                } else {
+                    result.push({
+                        tanggal: getVal(row, 'tanggal'),
+                        nama: getVal(row, 'nama'),
+                        kelas: getVal(row, 'kelas'),
+                        jurusan: getVal(row, 'jurusan'),
+                        waktu: getVal(row, 'waktu'),
+                        jenis_izin: getVal(row, 'jenis izin') || getVal(row, 'jenis_izin'),
+                        keterangan: getVal(row, 'keterangan'),
+                        bukti: getVal(row, 'bukti')
+                    });
+                }
+            }
+
+            // Filter berdasarkan tanggal yang dipilih (format YYYY-MM-DD dari input type="date")
+            return result.filter(row => {
+                if (!row.tanggal) return false;
+                let rowDateStr = row.tanggal;
+                // Konversi format DD/MM/YYYY atau DD-MM-YYYY ke YYYY-MM-DD untuk pencocokan
+                if (rowDateStr.includes('/') || rowDateStr.includes('-')) {
+                    const parts = rowDateStr.split(/[\/\-]/);
+                    if (parts.length === 3) {
+                        // Asumsi format Indonesia: DD/MM/YYYY atau YYYY/MM/DD
+                        // Kita coba deteksi: jika bagian pertama > 31, maka itu YYYY
+                        if (parseInt(parts[0]) > 31) {
+                            rowDateStr = `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+                        } else {
+                            rowDateStr = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                        }
+                    }
+                }
+                return rowDateStr.startsWith(targetDate);
+            });
+        }
+
+        function exportToExcel(customData = null, customDate = null) {
             const store = dataStore[activeTab];
-            const data = store.filtered;
-            const tanggalFile = new Date().toISOString().slice(0, 10);
-            const tanggalHuman = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const data = customData || store.filtered;
+            const tanggalFile = customDate || new Date().toISOString().slice(0, 10);
+            const tanggalHuman = customDate 
+                ? new Date(customDate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                : new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             
             let headers, excelData, fileName, sheetName;
             
@@ -1075,44 +963,21 @@
                 headers = ['No', 'Nama', 'Kelas', 'Jurusan', 'Waktu', 'Koordinat', 'Jarak'];
                 sheetName = 'Daftar Hadir';
                 fileName = `Daftar_Hadir_${tanggalFile}.xlsx`;
-                
                 excelData = [headers];
                 data.forEach((row, idx) => {
-                    excelData.push([
-                        idx + 1,
-                        row.nama || '',
-                        row.kelas || '',
-                        row.jurusan || '',
-                        row.waktu || '',
-                        row.koordinat || '',
-                        row.jarak || ''
-                    ]);
+                    excelData.push([idx + 1, row.nama || '', row.kelas || '', row.jurusan || '', row.waktu || '', row.koordinat || '', row.jarak || '']);
                 });
             } else {
                 headers = ['No', 'Nama', 'Kelas', 'Jurusan', 'Jenis Izin', 'Keterangan', 'Bukti', 'Waktu'];
                 sheetName = 'Daftar Izin';
                 fileName = `Daftar_Izin_${tanggalFile}.xlsx`;
-                
                 excelData = [headers];
                 data.forEach((row, idx) => {
-                    excelData.push([
-                        idx + 1,
-                        row.nama || '',
-                        row.kelas || '',
-                        row.jurusan || '',
-                        row.jenis_izin || '',
-                        row.keterangan || '',
-                        row.bukti || '',
-                        row.waktu || ''
-                    ]);
+                    excelData.push([idx + 1, row.nama || '', row.kelas || '', row.jurusan || '', row.jenis_izin || '', row.keterangan || '', row.bukti || '', row.waktu || '']);
                 });
             }
             
-            // Buat workbook dan worksheet
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            
-            // Tambahkan header informasi di bagian atas sheet (geser data ke bawah)
             const headerInfo = [
                 ['DAFTAR ' + (activeTab === 'hadir' ? 'HADIR' : 'IZIN') + ' E-PRESENSI'],
                 ['SMK NEGERI 2 TEGALSARI'],
@@ -1124,17 +989,15 @@
             const finalData = [...headerInfo, ...excelData];
             const wsFinal = XLSX.utils.aoa_to_sheet(finalData);
             
-            // Atur lebar kolom
             const colWidths = headers.map((h, i) => {
-                if (i === 1) return { wch: 30 }; // Nama
-                if (i === 5 && activeTab === 'izin') return { wch: 40 }; // Keterangan
-                if (i === 6 && activeTab === 'izin') return { wch: 50 }; // Bukti
-                if (i === 5 && activeTab === 'hadir') return { wch: 25 }; // Koordinat
+                if (i === 1) return { wch: 30 };
+                if (i === 5 && activeTab === 'izin') return { wch: 40 };
+                if (i === 6 && activeTab === 'izin') return { wch: 50 };
+                if (i === 5 && activeTab === 'hadir') return { wch: 25 };
                 return { wch: Math.max(h.length + 2, 12) };
             });
             wsFinal['!cols'] = colWidths;
             
-            // Style header judul (baris 0-3)
             for (let c = 0; c < headers.length; c++) {
                 const cellA1 = wsFinal[XLSX.utils.encode_cell({ r: 0, c: c })];
                 const cellA2 = wsFinal[XLSX.utils.encode_cell({ r: 1, c: c })];
@@ -1142,7 +1005,6 @@
                 if (cellA2) cellA2.s = { font: { bold: true, sz: 12 }, alignment: { horizontal: 'center' } };
             }
             
-            // Style header kolom (baris ke-5, index 5 karena ada 4 baris info + 1 baris kosong)
             const headerRowIndex = headerInfo.length;
             for (let c = 0; c < headers.length; c++) {
                 const cell = wsFinal[XLSX.utils.encode_cell({ r: headerRowIndex, c: c })];
@@ -1151,17 +1013,11 @@
                         font: { bold: true, color: { rgb: "FFFFFF" } },
                         fill: { fgColor: { rgb: "3B82F6" } },
                         alignment: { horizontal: "center" },
-                        border: {
-                            top: { style: "thin", color: { rgb: "000000" } },
-                            bottom: { style: "thin", color: { rgb: "000000" } },
-                            left: { style: "thin", color: { rgb: "000000" } },
-                            right: { style: "thin", color: { rgb: "000000" } }
-                        }
+                        border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
                     };
                 }
             }
             
-            // Jadikan URL di kolom Bukti (tab Izin) menjadi hyperlink di Excel
             if (activeTab === 'izin') {
                 const buktiColIdx = headers.indexOf('Bukti');
                 for (let i = 0; i < data.length; i++) {
@@ -1170,15 +1026,11 @@
                     const cell = wsFinal[cellAddress];
                     if (cell && cell.v) {
                         const urls = String(cell.v).split(/[,|]/).map(u => u.trim()).filter(u => u.startsWith('http'));
-                        if (urls.length > 0) {
-                            cell.l = { Target: urls[0] };
-                            cell.s = { font: { color: { rgb: "0000FF" }, u: "single" } };
-                        }
+                        if (urls.length > 0) { cell.l = { Target: urls[0] }; cell.s = { font: { color: { rgb: "0000FF" }, u: "single" } }; }
                     }
                 }
             }
             
-            // Jadikan koordinat (tab Hadir) menjadi hyperlink ke Google Maps
             if (activeTab === 'hadir') {
                 const koordinatColIdx = headers.indexOf('Koordinat');
                 for (let i = 0; i < data.length; i++) {
@@ -1197,8 +1049,6 @@
             
             XLSX.utils.book_append_sheet(wb, wsFinal, sheetName);
             XLSX.writeFile(wb, fileName);
-            
-            // Tampilkan notifikasi sukses sederhana
             showExportSuccess(fileName);
         }
 
@@ -1206,35 +1056,18 @@
             const toast = document.createElement('div');
             toast.className = 'fixed top-6 right-6 z-[200] bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-modern modal-slide-in';
             toast.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                <div>
-                    <p class="font-black text-sm">Export Berhasil!</p>
-                    <p class="text-[11px] opacity-90">${fileName}</p>
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <div><p class="font-black text-sm">Export Berhasil!</p><p class="text-[11px] opacity-90">${fileName}</p></div>
             `;
             document.body.appendChild(toast);
             setTimeout(() => {
-                toast.style.transition = 'all 0.3s ease';
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease'; toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Tutup modal saat klik di luar
-        document.getElementById('exportModal').addEventListener('click', (e) => {
-            if (e.target.id === 'exportModal') closeExportModal();
-        });
-
-        // Tutup modal dengan tombol Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !document.getElementById('exportModal').classList.contains('hidden')) {
-                closeExportModal();
-            }
-        });
+        document.getElementById('exportModal').addEventListener('click', (e) => { if (e.target.id === 'exportModal') closeExportModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('exportModal').classList.contains('hidden')) closeExportModal(); });
 
         window.onload = fetchAllData;
     </script>
