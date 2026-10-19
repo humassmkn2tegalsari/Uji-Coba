@@ -1,419 +1,1045 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <link rel="manifest" href="/manifest.json">
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="./manifest-induk.json">
     <meta name="theme-color" content="#000000">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="E-Presensi Skarida">
+    <meta name="apple-mobile-web-app-title" content="Buku Induk Skarida">
+    
+    <!-- Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
     <link rel="icon" type="image/png" href="favicon.png">
+    
     <meta charset="UTF-8">
-    <title>Monitoring E-Presensi Skarida</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <title>Buku Induk - SMKN 2 Tegalsari</title>
+    
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
-        .font-modern { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .font-times { font-family: "Times New Roman", Times, serif; }
-        .loader { border-top-color: #3b82f6; animation: spinner 1s linear infinite; }
-        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .text-10pt { font-size: 0.833rem; } .text-12pt { font-size: 1rem; } .text-14pt { font-size: 1.167rem; } .text-16pt { font-size: 1.33rem; }
-        .logo-container { width: 80px; display: flex; justify-content: center; align-items: center; }
-        .logo-img { max-width: 100%; height: auto; max-height: 100px; }
-        @media (max-width: 640px) { .logo-container { margin-bottom: 10px; } }
-        .pagination-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 38px; padding: 0 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; color: #4b5563; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: all 0.2s ease; font-family: 'Plus Jakarta Sans', sans-serif; }
-        .pagination-btn:hover:not(:disabled) { background: #f3f4f6; border-color: #d1d5db; color: #111827; }
-        .pagination-btn.active { background: #111827; border-color: #111827; color: white; cursor: default; }
-        .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .filter-input { padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.875rem; font-family: 'Plus Jakarta Sans', sans-serif; background: white; transition: all 0.2s ease; }
-        .filter-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        .empty-state { display: none; text-align: center; padding: 60px 20px; } .empty-state.active { display: block; }
-        .tab-btn { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 14px 20px; font-size: 0.875rem; font-weight: 600; color: #6b7280; background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.2s ease; font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap; }
-        .tab-btn:hover { color: #111827; background: #f9fafb; } .tab-btn.active { color: #111827; border-bottom-color: #3b82f6; }
-        .tab-btn .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; font-size: 0.75rem; font-weight: 700; background: #e5e7eb; color: #6b7280; }
-        .tab-btn.active .badge { background: #3b82f6; color: white; } .tab-btn .tab-icon { display: inline-flex; align-items: center; justify-content: center; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --aero-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top left, #f0f4ff 0%, #ffffff 40%, #fdf2f8 100%);
+            background-attachment: fixed;
+            color: #1e293b;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            font-size: 14px;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--aero-shadow);
+        }
+        
+        .aero-blur { backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+        
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tap-scale { transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tap-scale:active { transform: scale(0.95); }
+        
+        .animate-in { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-input {
+            width: 100%; padding: 0.6rem 0.875rem;
+            background: rgba(255,255,255,0.6); border: 1px solid #e2e8f0;
+            border-radius: 0.75rem; font-size: 0.85rem; font-weight: 500;
+            transition: all 0.3s ease; outline: none;
+        }
+        .form-input:focus {
+            background: white; border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
         .modal-backdrop { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .modal-slide-in { animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes modalSlide { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .code-input { font-family: 'Courier New', monospace; letter-spacing: 0.3em; text-align: center; font-size: 1.25rem; font-weight: 700; }
-        .shake { animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+        .modal-slide-in { animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes modalSlide { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .modal-fixed-height { max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-content-scroll {
+            flex: 1; overflow-y: auto; padding-right: 4px; margin-right: -4px;
+            scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+        }
+        .modal-content-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-content-scroll::-webkit-scrollbar-track { background: transparent; }
+        .modal-content-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+
+        .hide { display: none !important; }
+        
+        /* LOGIKA ROLE BARU */
+        /* Elemen yang HANYA boleh dilihat/diakses oleh Admin */
+        .admin-only { display: none !important; } 
+        body.role-admin .admin-only { display: inherit !important; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen relative">
 
-    <div id="exportModal" class="hidden fixed inset-0 z-[100] modal-backdrop flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden modal-slide-in shadow-2xl font-modern">
-            <div class="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 relative overflow-hidden">
-                <div class="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full"></div>
-                <div class="relative flex items-center gap-3">
-                    <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    </div>
-                    <div><h2 class="text-lg font-black text-white tracking-tight">Export ke Excel</h2><p class="text-[10px] font-bold text-white/80 uppercase tracking-widest">Validasi Kode Akses</p></div>
+    <!-- Background Blobs -->
+    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 rounded-full blur-[100px] -z-10 animate-pulse"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-500/10 rounded-full blur-[100px] -z-10"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 inset-x-4 z-[300] flex justify-center pointer-events-none hide">
+        <div id="toastContent" class="aero-blur bg-white/95 border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transform transition-all duration-300 translate-y-[-20px] opacity-0">
+            <i id="toastIcon" data-lucide="info" class="w-4 h-4"></i>
+            <span id="toastMessage" class="font-bold text-xs tracking-tight text-slate-700">Pesan</span>
+        </div>
+    </div>
+
+    <!-- Header Sticky -->
+    <header class="sticky top-4 z-50 mx-4 md:mx-auto max-w-4xl">
+        <div class="glass-card rounded-2xl p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer tap-scale" onclick="navigateTo('home')">
+                <img src="https://lh3.googleusercontent.com/d/15zyF01OHtEgTl8p6bvEkz7xw30ByE2en" alt="Logo" class="w-9 h-9 object-contain drop-shadow-md">
+                <div class="hidden sm:block">
+                    <h1 class="text-sm font-black text-slate-800 leading-tight">Buku Induk Digital</h1>
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">SMK Negeri 2 Tegalsari</p>
                 </div>
             </div>
-            <div class="p-6 space-y-4">
-                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl flex items-start gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-600 flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <p class="text-[11px] font-bold text-emerald-700 leading-tight">Masukkan kode akses khusus untuk mengunduh data presensi dalam format Excel.</p>
-                </div>
-                
-                <div class="space-y-3">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Pilih Jenis Data Export</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <label class="cursor-pointer">
-                            <input type="radio" name="exportType" value="current" checked onchange="toggleExportDateInput()" class="hidden peer">
-                            <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
-                                <span class="text-[10px] font-bold text-slate-600 peer-checked:text-emerald-700">Data Saat Ini</span>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="exportType" value="historical" onchange="toggleExportDateInput()" class="hidden peer">
-                            <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
-                                <span class="text-[10px] font-bold text-slate-600 peer-checked:text-emerald-700">Rentang Tanggal</span>
-                            </div>
-                        </label>
-                        <label class="cursor-pointer">
-                            <input type="radio" name="exportType" value="all" onchange="toggleExportDateInput()" class="hidden peer">
-                            <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 text-center transition-all">
-                                <span class="text-[10px] font-bold text-slate-600 peer-checked:text-emerald-700">Semua Data</span>
-                            </div>
-                        </label>
-                    </div>
-                    
-                    <div id="historicalDateContainer" class="hidden space-y-3 mt-2 pt-3 border-t border-slate-100">
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tanggal Mulai</label>
-                            <input type="date" id="exportStartDate" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Tanggal Akhir</label>
-                            <input type="date" id="exportEndDate" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        Kode Akses
-                    </label>
-                    <div class="relative">
-                        <input type="password" id="exportCodeInput" class="code-input w-full px-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter') confirmExport()">
-                        <button type="button" onclick="toggleExportCodeVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                            <svg id="toggleExportIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
-                    </div>
-                    <p id="exportCodeError" class="hidden text-[11px] font-bold text-red-500 flex items-center gap-1 mt-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span>Kode akses salah! Silakan coba lagi.</span>
-                    </p>
-                </div>
-                
-                <div id="exportInfo" class="bg-slate-50 p-3 rounded-xl">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data yang akan diunduh:</p>
-                    <p id="exportInfoText" class="text-xs font-bold text-slate-700">-</p>
-                </div>
-            </div>
-            <div class="p-4 bg-slate-50/80 border-t border-slate-100 flex gap-3">
-                <button type="button" onclick="closeExportModal()" class="flex-1 py-3.5 bg-white border-2 border-slate-200 text-slate-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors">Batal</button>
-                <button type="button" id="btnConfirmExport" onclick="confirmExport()" class="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-teal-600 transition-all">
-                    <svg id="btnExportIcon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span id="btnExportText">Unduh Excel</span>
+            <div class="flex items-center gap-3">
+                <span class="badge px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-600 border border-indigo-200" id="roleBadge">User</span>
+                <button onclick="logout()" class="w-9 h-9 flex items-center justify-center bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition-colors tap-scale">
+                    <i data-lucide="power" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <div class="flex flex-col sm:flex-row items-center font-times border-b-4 border-black pb-4 mb-8 text-center">
-            <div class="logo-container sm:mr-4"><img id="logo-kop" src="https://lh3.googleusercontent.com/u/0/d/1H50VHCq-M7qyzYHO-Ftq3QtTfp0Fkgyf" alt="Logo" class="logo-img" onerror="this.style.display='none'"></div>
-            <div class="flex-1">
-                <p class="uppercase font-bold tracking-tight leading-tight text-12pt">PEMERINTAH PROVINSI JAWA TIMUR</p>
-                <p class="uppercase font-bold leading-tight text-12pt">DINAS PENDIDIKAN</p>
-                <p class="uppercase font-bold leading-tight text-16pt">SEKOLAH MENENGAH KEJURUAN NEGERI 2 TEGALSARI</p>
-                <p class="text-10pt leading-tight italic">Jalan KH. Achmad Musayyidi Nomor 2 Karangdoro, Tegalsari, Banyuwangi, 68491</p>
-                <p class="text-10pt leading-tight italic text-blue-600">Telepon 0812 1682 9150 Pos-el smknegeri2tegalsari@gmail.com</p>
-            </div>
-            <div class="hidden sm:block w-[80px]"></div>
-        </div>
-        <div class="text-center mb-10 font-modern">
-            <h1 id="report-title" class="text-14pt font-bold text-gray-800 uppercase leading-snug">DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI</h1>
-            <p class="text-12pt text-gray-600 mt-2 font-semibold" id="current-date"></p>
-        </div>
-        <div id="app-container" class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-200">
-            <div id="tab-container" class="flex border-b border-gray-200 bg-white overflow-x-auto font-modern">
-                <button id="tab-hadir" class="tab-btn active" onclick="switchTab('hadir')"><span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg></span><span>Daftar Hadir</span><span id="badge-hadir" class="badge">0</span></button>
-                <button id="tab-izin" class="tab-btn" onclick="switchTab('izin')"><span class="tab-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span><span>Daftar Izin</span><span id="badge-izin" class="badge">0</span></button>
-            </div>
-            <div id="loading-state" class="flex flex-col items-center justify-center p-24 font-modern italic"><div class="loader ease-linear rounded-full border-4 border-gray-100 h-14 w-14 mb-6"></div><p class="text-gray-400 font-medium tracking-wide">Memperbarui data...</p></div>
-            <div id="error-state" class="hidden flex flex-col items-center justify-center p-16 text-center font-modern"><div class="bg-red-50 p-5 rounded-2xl mb-6"><svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div><h2 class="text-2xl font-bold text-gray-400/50 mb-3 tracking-tight">Data presensi hari ini tidak tersedia</h2><p id="error-message" class="text-gray-300/40 max-w-md leading-relaxed mb-8 text-sm font-medium">Gagal mengambil data dari server.</p><button onclick="fetchAllData()" class="px-10 py-3.5 bg-gray-900 text-white rounded-lg font-bold hover:bg-black transform transition active:scale-95 shadow-lg shadow-gray-200 uppercase text-xs tracking-widest">MUAT ULANG DATA</button></div>
-            <div id="data-container" class="hidden">
-                <div id="filter-container" class="p-4 bg-gray-50/80 border-b border-gray-200 font-modern">
-                    <div class="flex items-center justify-between mb-3 gap-2 flex-wrap">
-                        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg><h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Filter Data</h3></div>
-                        <button onclick="openExportModal()" id="btn-export" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-bold text-xs uppercase tracking-wider hover:from-emerald-600 hover:to-teal-600 transition active:scale-95 shadow-md shadow-emerald-500/20"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Excel</button>
-                    </div>
-                    <div id="filter-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Cari Nama Murid</label><input type="text" id="filter-nama" class="filter-input w-full" placeholder="Ketik nama..."></div>
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Kelas</label><select id="filter-kelas" class="filter-input w-full"><option value="">Semua Kelas</option></select></div>
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Jurusan</label><select id="filter-jurusan" class="filter-input w-full"><option value="">Semua Jurusan</option></select></div>
-                        <div id="filter-jenis-container" class="hidden"><label class="block text-xs font-medium text-gray-600 mb-1">Jenis Izin</label><select id="filter-jenis" class="filter-input w-full"><option value="">Semua Jenis</option></select></div>
-                        <div class="flex items-end"><button onclick="resetFilters()" class="w-full px-4 py-2 bg-gray-900 text-white rounded-lg font-semibold text-xs uppercase tracking-wider hover:bg-black transition active:scale-95">Reset Filter</button></div>
-                    </div>
-                    <p id="filter-result" class="mt-3 text-xs text-gray-500 font-medium"></p>
-                </div>
-                <div class="overflow-x-auto"><table class="w-full text-left border-collapse font-modern"><thead><tr id="table-head" class="bg-gray-50 border-b border-gray-200"></tr></thead><tbody id="table-body" class="divide-y divide-gray-100"></tbody></table></div>
-                <div id="empty-state" class="empty-state font-modern"><svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><p class="text-gray-500 font-semibold mb-2">Tidak ada data yang cocok</p><p class="text-gray-400 text-sm">Coba ubah atau reset filter Anda</p></div>
-                <div id="pagination-container" class="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-gray-50/50 border-t border-gray-200 font-modern"><p id="pagination-info" class="text-sm text-gray-500 font-medium"></p><div id="pagination-buttons" class="flex flex-wrap items-center gap-2"></div></div>
-            </div>
-        </div>
-        <div class="mt-6 text-center text-xs text-gray-400 font-times font-medium italic">Dicetak secara otomatis dari sistem E-Presensi Skarida.</div>
-    </div>
-
-    <script>
-        const SHEET_CSV_URL_HADIR = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=0&single=true&output=csv';
-        const SHEET_CSV_URL_IZIN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSJP1ppPrXAKGP8jhTx7KgygjghYt_3ppQ3i2fcCm82ag05A4uiYbvwA31okf4mG2oKpTc1_u7hwloX/pub?gid=457704213&single=true&output=csv';
-        const LOG_SHEET_ID = '1DzwFrT82LjZRqNlQ8l8d3q__pDPSaNsvFGFrhnXLMwI';
-        const LOG_GID_HADIR = '1817234920'; const LOG_GID_IZIN = '572353411';
-        const COLUMN_CONFIG_HADIR = { nama: 8, kelas: 9, jurusan: 10, waktu: 11, koordinat: 12, jarak: 13 };
-        const COLUMN_CONFIG_IZIN = { nama: 1, kelas: 2, jurusan: 3, waktu: 4, jenis_izin: 7, keterangan: 8, bukti: 9 };
-        const ROWS_PER_PAGE = 10; const EXPORT_ACCESS_CODE = "69921069";
-
-        const loadingState = document.getElementById('loading-state'); const errorState = document.getElementById('error-state'); const dataContainer = document.getElementById('data-container');
-        const tableHead = document.getElementById('table-head'); const tableBody = document.getElementById('table-body'); const dateDisplay = document.getElementById('current-date');
-        const errorMessage = document.getElementById('error-message'); const paginationInfo = document.getElementById('pagination-info'); const paginationButtons = document.getElementById('pagination-buttons');
-        const emptyState = document.getElementById('empty-state'); const filterResult = document.getElementById('filter-result'); const reportTitle = document.getElementById('report-title');
-        const badgeHadir = document.getElementById('badge-hadir'); const badgeIzin = document.getElementById('badge-izin'); const filterGrid = document.getElementById('filter-grid');
-        const filterNama = document.getElementById('filter-nama'); const filterKelas = document.getElementById('filter-kelas'); const filterJurusan = document.getElementById('filter-jurusan'); const filterJenis = document.getElementById('filter-jenis');
-
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        dateDisplay.innerText = new Date().toLocaleDateString('id-ID', options);
-
-        let activeTab = 'hadir';
-        const dataStore = {
-            hadir: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [] },
-            izin: { all: [], filtered: [], currentPage: 1, availableKelas: [], availableJurusan: [], availableJenis: [] }
-        };
-
-        filterNama.addEventListener('input', debounce(applyFilters, 300)); filterKelas.addEventListener('change', applyFilters); filterJurusan.addEventListener('change', applyFilters); filterJenis.addEventListener('change', applyFilters);
-
-        function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
-        async function fetchCSV(url) { const response = await fetch(`${url}&t=${new Date().getTime()}`, { cache: 'no-store' }); if (!response.ok) throw new Error('Failed to fetch'); const csvText = await response.text(); if (csvText.includes('<!DOCTYPE html>') || csvText.includes('login')) throw new Error('Akses Dibatasi'); return parseCSV(csvText); }
-        function parseCSV(text) { const rows = []; let row = []; let field = ''; let inQuotes = false; for (let i = 0; i < text.length; i++) { const c = text.charAt(i); if (inQuotes) { if (c === '"') { if (text.charAt(i + 1) === '"') { field += '"'; i++; } else { inQuotes = false; } } else { field += c; } } else { if (c === '"') { inQuotes = true; } else if (c === ',') { row.push(field); field = ''; } else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; } else if (c === '\r') { continue; } else { field += c; } } } row.push(field); rows.push(row); return rows; }
-        function cleanCellValue(value) { if (!value) return ''; return value.replace(/^"(.*)"$/, '$1').replace(/[\n\r]+/g, ' ').trim(); }
-        function makeMultipleLinks(urlStr) { if (!urlStr || urlStr === '-') return '<span class="text-gray-400 text-xs">-</span>'; const urls = String(urlStr).split(/[,|]/).map(u => u.trim()).filter(u => u.startsWith('http')); if (urls.length === 0) return '<span class="text-gray-400 text-xs">-</span>'; return urls.map((u, i) => `<a href="${u}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-bold text-xs transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Foto ${i + 1}</a>`).join('<br>'); }
-
-        async function fetchAllData() { loadingState.classList.remove('hidden'); errorState.classList.add('hidden'); dataContainer.classList.add('hidden'); try { const [resultHadir, resultIzin] = await Promise.allSettled([fetchCSV(SHEET_CSV_URL_HADIR), fetchCSV(SHEET_CSV_URL_IZIN)]); if (resultHadir.status === 'fulfilled') processDataHadir(resultHadir.value); else dataStore.hadir.all = []; if (resultIzin.status === 'fulfilled') processDataIzin(resultIzin.value); else dataStore.izin.all = []; badgeHadir.textContent = dataStore.hadir.all.length; badgeIzin.textContent = dataStore.izin.all.length; if (dataStore.hadir.all.length === 0 && dataStore.izin.all.length === 0) { showError('Tidak ada data yang tersedia.'); return; } renderCurrentTab(); loadingState.classList.add('hidden'); dataContainer.classList.remove('hidden'); } catch (error) { showError(error.message); } }
-        function processDataHadir(rows) { dataStore.hadir.all = []; const kelasSet = new Set(), jurusanSet = new Set(); for (let i = 4; i < rows.length; i++) { if (!rows[i] || rows[i].join('').trim() === "") continue; const row = rows[i]; const namaCell = cleanCellValue(row[COLUMN_CONFIG_HADIR.nama]); if (!namaCell || namaCell === '""') continue; const data = { nama: namaCell, kelas: cleanCellValue(row[COLUMN_CONFIG_HADIR.kelas]), jurusan: cleanCellValue(row[COLUMN_CONFIG_HADIR.jurusan]), waktu: cleanCellValue(row[COLUMN_CONFIG_HADIR.waktu]), koordinat: cleanCellValue(row[COLUMN_CONFIG_HADIR.koordinat]), jarak: cleanCellValue(row[COLUMN_CONFIG_HADIR.jarak]) }; dataStore.hadir.all.push(data); if (data.kelas) kelasSet.add(data.kelas); if (data.jurusan) jurusanSet.add(data.jurusan); } dataStore.hadir.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id')); dataStore.hadir.availableJurusan = Array.from(jurusanSet).sort(); }
-        function processDataIzin(rows) { dataStore.izin.all = []; const kelasSet = new Set(), jurusanSet = new Set(), jenisSet = new Set(); for (let i = 4; i < rows.length; i++) { if (!rows[i] || rows[i].join('').trim() === "") continue; const row = rows[i]; const namaCell = cleanCellValue(row[COLUMN_CONFIG_IZIN.nama]); if (!namaCell || namaCell === '""') continue; const data = { nama: namaCell, kelas: cleanCellValue(row[COLUMN_CONFIG_IZIN.kelas]), jurusan: cleanCellValue(row[COLUMN_CONFIG_IZIN.jurusan]), waktu: cleanCellValue(row[COLUMN_CONFIG_IZIN.waktu]), jenis_izin: cleanCellValue(row[COLUMN_CONFIG_IZIN.jenis_izin]), keterangan: cleanCellValue(row[COLUMN_CONFIG_IZIN.keterangan]), bukti: cleanCellValue(row[COLUMN_CONFIG_IZIN.bukti]) }; dataStore.izin.all.push(data); if (data.kelas) kelasSet.add(data.kelas); if (data.jurusan) jurusanSet.add(data.jurusan); if (data.jenis_izin) jenisSet.add(data.jenis_izin); } dataStore.izin.availableKelas = Array.from(kelasSet).sort((a, b) => a.localeCompare(b, 'id')); dataStore.izin.availableJurusan = Array.from(jurusanSet).sort(); dataStore.izin.availableJenis = Array.from(jenisSet).sort(); }
-
-        function switchTab(tab) { if (tab === activeTab) return; activeTab = tab; const isIzin = (tab === 'izin'); document.getElementById('tab-hadir').classList.toggle('active', !isIzin); document.getElementById('tab-izin').classList.toggle('active', isIzin); reportTitle.innerHTML = isIzin ? 'DAFTAR IZIN E-PRESENSI<br>SMK NEGERI 2 TEGALSARI' : 'DAFTAR HADIR E-PRESENSI<br>SMK NEGERI 2 TEGALSARI'; document.getElementById('filter-jenis-container').classList.toggle('hidden', !isIzin); filterGrid.classList.toggle('lg:grid-cols-4', !isIzin); filterGrid.classList.toggle('lg:grid-cols-5', isIzin); resetFilters(true); renderCurrentTab(); }
-        function renderCurrentTab() { const store = dataStore[activeTab]; populateDropdown(filterKelas, store.availableKelas, 'Semua Kelas'); populateDropdown(filterJurusan, store.availableJurusan, 'Semua Jurusan'); if (activeTab === 'izin') populateDropdown(filterJenis, store.availableJenis, 'Semua Jenis'); applyFilters(); }
-        function populateDropdown(selectElement, optionsList, defaultText) { selectElement.innerHTML = `<option value="">${defaultText}</option>`; optionsList.forEach(opt => { const option = document.createElement('option'); option.value = opt; option.textContent = opt; selectElement.appendChild(option); }); }
-        function applyFilters() { const store = dataStore[activeTab]; const searchNama = filterNama.value.trim().toLowerCase(); const selectedKelas = filterKelas.value; const selectedJurusan = filterJurusan.value; const selectedJenis = filterJenis.value; store.filtered = store.all.filter(data => { const matchNama = !searchNama || data.nama.toLowerCase().includes(searchNama); const matchKelas = !selectedKelas || data.kelas === selectedKelas; const matchJurusan = !selectedJurusan || data.jurusan === selectedJurusan; if (activeTab === 'izin') { const matchJenis = !selectedJenis || data.jenis_izin === selectedJenis; return matchNama && matchKelas && matchJurusan && matchJenis; } return matchNama && matchKelas && matchJurusan; }); const labelData = activeTab === 'hadir' ? 'data presensi' : 'data izin'; if (searchNama || selectedKelas || selectedJurusan || selectedJenis) { filterResult.textContent = `Ditemukan ${store.filtered.length} dari ${store.all.length} ${labelData}`; filterResult.classList.add('text-blue-600'); filterResult.classList.remove('text-gray-500'); } else { filterResult.textContent = `Total ${store.all.length} ${labelData}`; filterResult.classList.remove('text-blue-600'); filterResult.classList.add('text-gray-500'); } store.currentPage = 1; renderTable(); }
-        function resetFilters(silent = false) { filterNama.value = ''; filterKelas.value = ''; filterJurusan.value = ''; filterJenis.value = ''; if (!silent) applyFilters(); }
-
-        function renderTable() { tableHead.innerHTML = ''; tableBody.innerHTML = ''; const store = dataStore[activeTab]; const manualHeaders = activeTab === 'hadir' ? ["No", "Nama", "Kelas", "Jurusan", "Waktu", "Koordinat", "Jarak"] : ["No", "Nama", "Kelas", "Jurusan", "Jenis Izin", "Keterangan", "Bukti", "Waktu"]; manualHeaders.forEach((headerText) => { const th = document.createElement('th'); th.className = `px-4 py-4 text-sm font-extrabold text-gray-700 border-b border-gray-200 uppercase text-center tracking-widest bg-gray-50/50 whitespace-nowrap`; th.textContent = headerText; tableHead.appendChild(th); }); if (store.filtered.length === 0) { emptyState.classList.add('active'); document.getElementById('pagination-container').classList.add('hidden'); return; } emptyState.classList.remove('active'); const totalPages = Math.ceil(store.filtered.length / ROWS_PER_PAGE); const startIndex = (store.currentPage - 1) * ROWS_PER_PAGE; const endIndex = Math.min(startIndex + ROWS_PER_PAGE, store.filtered.length); const pageRows = store.filtered.slice(startIndex, endIndex); pageRows.forEach((data, index) => { const tr = document.createElement('tr'); tr.className = 'hover:bg-blue-50/30 transition-colors'; const tdNo = document.createElement('td'); tdNo.className = 'px-4 py-4 text-sm font-medium text-gray-400 text-center w-12'; tdNo.textContent = startIndex + index + 1; tr.appendChild(tdNo); const tdNama = document.createElement('td'); tdNama.className = 'px-4 py-4 text-sm text-left text-gray-700 font-medium'; tdNama.textContent = data.nama; tr.appendChild(tdNama); if (activeTab === 'hadir') { const tdKelas = document.createElement('td'); tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdKelas.textContent = data.kelas; tr.appendChild(tdKelas); const tdJurusan = document.createElement('td'); tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan); const tdWaktu = document.createElement('td'); tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdWaktu.textContent = data.waktu; tr.appendChild(tdWaktu); const tdKoordinat = document.createElement('td'); tdKoordinat.className = 'px-4 py-4 text-xs text-center text-gray-600 whitespace-nowrap'; if (data.koordinat && data.koordinat.includes(',')) { const coords = data.koordinat.split(',').map(c => c.trim()); if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) { tdKoordinat.innerHTML = `<a href="https://www.google.com/maps?q=${coords[0]},${coords[1]}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Lihat Peta</a>`; } else { tdKoordinat.textContent = data.koordinat || '-'; } } else { tdKoordinat.textContent = data.koordinat || '-'; } tr.appendChild(tdKoordinat); const tdJarak = document.createElement('td'); tdJarak.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdJarak.textContent = data.jarak || '-'; tr.appendChild(tdJarak); } else { const tdKelas = document.createElement('td'); tdKelas.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdKelas.textContent = data.kelas; tr.appendChild(tdKelas); const tdJurusan = document.createElement('td'); tdJurusan.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdJurusan.textContent = data.jurusan; tr.appendChild(tdJurusan); const tdJenis = document.createElement('td'); tdJenis.className = 'px-4 py-4 text-center whitespace-nowrap'; const badge = document.createElement('span'); let badgeClass = 'bg-gray-100 text-gray-700'; const jenis = data.jenis_izin.toLowerCase(); if (jenis.includes('sakit')) badgeClass = 'bg-orange-100 text-orange-700'; else if (jenis.includes('force')) badgeClass = 'bg-purple-100 text-purple-700'; else if (jenis.includes('izin')) badgeClass = 'bg-blue-100 text-blue-700'; else if (jenis.includes('alpa')) badgeClass = 'bg-red-100 text-red-700'; badge.className = `inline-block px-3 py-1 text-xs font-semibold rounded-full ${badgeClass}`; badge.textContent = data.jenis_izin; tdJenis.appendChild(badge); tr.appendChild(tdJenis); const tdKet = document.createElement('td'); tdKet.className = 'px-4 py-4 text-sm text-left text-gray-600 min-w-[200px]'; tdKet.textContent = data.keterangan || '-'; tr.appendChild(tdKet); const tdBukti = document.createElement('td'); tdBukti.className = 'px-4 py-4 text-sm text-center whitespace-nowrap'; tdBukti.innerHTML = makeMultipleLinks(data.bukti); tr.appendChild(tdBukti); const tdWaktu = document.createElement('td'); tdWaktu.className = 'px-4 py-4 text-sm text-center text-gray-600 whitespace-nowrap'; tdWaktu.textContent = data.waktu; tr.appendChild(tdWaktu); } tableBody.appendChild(tr); }); renderPagination(totalPages); }
-
-        function renderPagination(totalPages) { const store = dataStore[activeTab]; const startIndex = (store.currentPage - 1) * ROWS_PER_PAGE + 1; const endIndex = Math.min(store.currentPage * ROWS_PER_PAGE, store.filtered.length); paginationInfo.innerHTML = `Menampilkan <span class="font-semibold text-gray-700">${startIndex}-${endIndex}</span> dari <span class="font-semibold text-gray-700">${store.filtered.length}</span> data`; paginationButtons.innerHTML = ''; if (totalPages <= 1) { document.getElementById('pagination-container').classList.add('hidden'); return; } document.getElementById('pagination-container').classList.remove('hidden'); const prevBtn = document.createElement('button'); prevBtn.className = 'pagination-btn'; prevBtn.innerHTML = '&larr; Sebelumnya'; prevBtn.disabled = store.currentPage === 1; prevBtn.onclick = () => goToPage(store.currentPage - 1); paginationButtons.appendChild(prevBtn); const pageNumbers = getPageNumbers(store.currentPage, totalPages); pageNumbers.forEach(p => { const btn = document.createElement('button'); if (p === '...') { btn.className = 'pagination-btn cursor-default'; btn.textContent = '...'; btn.disabled = true; } else { btn.className = 'pagination-btn'; if (p === store.currentPage) btn.classList.add('active'); btn.textContent = p; btn.onclick = () => goToPage(p); } paginationButtons.appendChild(btn); }); const nextBtn = document.createElement('button'); nextBtn.className = 'pagination-btn'; nextBtn.innerHTML = 'Selanjutnya &rarr;'; nextBtn.disabled = store.currentPage === totalPages; nextBtn.onclick = () => goToPage(store.currentPage + 1); paginationButtons.appendChild(nextBtn); }
-        function getPageNumbers(current, total) { if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1); const pages = []; if (current <= 3) pages.push(1, 2, 3, 4, '...', total); else if (current >= total - 2) pages.push(1, '...', total - 3, total - 2, total - 1, total); else pages.push(1, '...', current - 1, current, current + 1, '...', total); return pages; }
-        function goToPage(page) { dataStore[activeTab].currentPage = page; renderTable(); dataContainer.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-        function showError(msg) { loadingState.classList.add('hidden'); errorState.classList.remove('hidden'); dataContainer.classList.add('hidden'); errorMessage.textContent = msg; }
-
-        // ==========================================
-        // ✅ FUNGSI EXPORT EXCEL (RENTANG TANGGAL)
-        // ==========================================
+    <main class="max-w-4xl mx-auto p-4 md:p-6 pb-24 relative z-10">
         
-        function toggleExportDateInput() {
-            const type = document.querySelector('input[name="exportType"]:checked').value;
-            const dateContainer = document.getElementById('historicalDateContainer');
-            const infoSection = document.getElementById('exportInfo');
+        <!-- VIEW: HOME -->
+        <div id="viewHome" class="animate-in space-y-6">
+            <div class="text-center py-6 space-y-1">
+                <h2 class="text-3xl font-black gradient-text tracking-tight">Selamat Datang</h2>
+                <p class="text-slate-500 text-sm font-medium">Sistem Manajemen Data Murid Terpadu</p>
+            </div>
             
-            if (type === 'historical') {
-                dateContainer.classList.remove('hidden');
-                infoSection.classList.add('hidden'); // Sembunyikan info untuk rentang tanggal
-            } else if (type === 'all') {
-                dateContainer.classList.add('hidden');
-                infoSection.classList.add('hidden'); // Sembunyikan info untuk semua data
-            } else {
-                dateContainer.classList.add('hidden');
-                infoSection.classList.remove('hidden'); // Tampilkan info untuk data saat ini
-                const store = dataStore[activeTab];
-                const labelData = activeTab === 'hadir' ? 'Daftar Hadir' : 'Daftar Izin';
-                const tanggalStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                document.getElementById('exportInfoText').innerHTML = `<div class="flex flex-col gap-1"><span>${labelData} - ${tanggalStr}</span><span>Total: <strong>${store.filtered.length}</strong> data${store.filtered.length !== store.all.length ? ` (dari ${store.all.length} data keseluruhan)` : ''}</span></div>`;
-            }
-        }
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+                <div class="glass-card p-6 rounded-2xl cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group tap-scale" onclick="navigateTo('jurusan')">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                        <i data-lucide="user-plus" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800 mb-1">Input Data Murid</h3>
+                    <p class="text-xs text-slate-500 font-medium leading-relaxed">Tambahkan biodata murid baru dengan format detail.</p>
+                </div>
 
-        function openExportModal() {
-            const store = dataStore[activeTab];
-            if (store.all.length === 0) { alert('Tidak ada data yang dapat diekspor.'); return; }
-            document.querySelector('input[name="exportType"][value="current"]').checked = true;
-            toggleExportDateInput();
-            document.getElementById('exportStartDate').value = '';
-            document.getElementById('exportEndDate').value = '';
-            document.getElementById('exportCodeInput').value = '';
-            document.getElementById('exportCodeError').classList.add('hidden');
-            document.getElementById('exportCodeInput').classList.remove('border-red-500');
-            const btn = document.getElementById('btnConfirmExport');
-            btn.disabled = false;
-            document.getElementById('btnExportText').textContent = 'Unduh Excel';
-            document.getElementById('btnExportIcon').style.display = 'inline';
-            document.getElementById('exportModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => document.getElementById('exportCodeInput').focus(), 100);
-        }
+                <!-- DIUBAH: Hapus kelas admin-only agar User juga bisa melihat menu Kelola Data -->
+                <div class="glass-card p-6 rounded-2xl cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group tap-scale" onclick="navigateTo('data')">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                        <i data-lucide="database" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800 mb-1">Kelola Data</h3>
+                    <p class="text-xs text-slate-500 font-medium leading-relaxed">Cari, filter, dan export data murid ke format Excel.</p>
+                </div>
+            </div>
+        </div>
 
-        function closeExportModal() { 
-            document.getElementById('exportModal').classList.add('hidden'); 
-            document.body.style.overflow = ''; 
-            const btn = document.getElementById('btnConfirmExport');
-            btn.disabled = false;
-            document.getElementById('btnExportText').textContent = 'Unduh Excel';
-            document.getElementById('btnExportIcon').style.display = 'inline';
-        }
-
-        function toggleExportCodeVisibility() {
-            const input = document.getElementById('exportCodeInput'); const icon = document.getElementById('toggleExportIcon');
-            if (input.type === 'password') { input.type = 'text'; icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'; } 
-            else { input.type = 'password'; icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'; }
-        }
-
-        async function confirmExport() {
-            const code = document.getElementById('exportCodeInput').value.trim();
-            const errorEl = document.getElementById('exportCodeError'); const inputEl = document.getElementById('exportCodeInput');
-            const btn = document.getElementById('btnConfirmExport'); const btnText = document.getElementById('btnExportText'); const btnIcon = document.getElementById('btnExportIcon');
+        <!-- VIEW: PILIH JURUSAN -->
+        <div id="viewJurusan" class="hide animate-in">
+            <div class="flex items-center gap-2 mb-4 cursor-pointer text-slate-500 hover:text-indigo-600 transition-colors tap-scale w-max" onclick="navigateTo('home')">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="font-bold text-xs uppercase tracking-widest">Kembali ke Beranda</span>
+            </div>
             
-            if (code !== EXPORT_ACCESS_CODE) { errorEl.classList.remove('hidden'); inputEl.classList.add('border-red-500', 'shake'); setTimeout(() => inputEl.classList.remove('shake'), 500); inputEl.select(); return; }
-
-            const exportType = document.querySelector('input[name="exportType"]:checked').value;
-            
-            if (exportType === 'historical') {
-                const startDate = document.getElementById('exportStartDate').value;
-                const endDate = document.getElementById('exportEndDate').value;
-                if (!startDate || !endDate) { alert('Silakan pilih tanggal mulai dan tanggal akhir!'); return; }
-                if (new Date(startDate) > new Date(endDate)) { alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir!'); return; }
+            <div class="glass-card p-6 rounded-2xl">
+                <h2 class="text-xl font-black text-slate-800 mb-1">Pilih Jurusan</h2>
+                <p class="text-slate-500 mb-6 text-xs">Tentukan kompetensi keahlian untuk input data</p>
                 
-                btn.disabled = true; btnText.textContent = 'Memuat Data...'; btnIcon.style.display = 'none';
-                try {
-                    const historicalData = await fetchHistoricalDataRange(startDate, endDate, activeTab);
-                    if (historicalData.length === 0) {
-                        alert(`Tidak ada data ditemukan untuk rentang tanggal ${startDate} sampai ${endDate}.`);
-                        btn.disabled = false; btnText.textContent = 'Unduh Excel'; btnIcon.style.display = 'inline'; return;
-                    }
-                    exportToExcel(historicalData, startDate, endDate);
-                    closeExportModal();
-                } catch (err) { alert('Gagal mengambil data. Pastikan spreadsheet dapat diakses.\n\nError: ' + err.message); btn.disabled = false; btnText.textContent = 'Unduh Excel'; btnIcon.style.display = 'inline'; }
-            } else if (exportType === 'all') {
-                btn.disabled = true; btnText.textContent = 'Memuat Data...'; btnIcon.style.display = 'none';
-                try {
-                    const allData = await fetchAllLogData(activeTab);
-                    if (allData.length === 0) { alert('Tidak ada data ditemukan di sheet Log.'); btn.disabled = false; btnText.textContent = 'Unduh Excel'; btnIcon.style.display = 'inline'; return; }
-                    exportToExcel(allData, 'semua_data');
-                    closeExportModal();
-                } catch (err) { alert('Gagal mengambil semua data.\n\nError: ' + err.message); btn.disabled = false; btnText.textContent = 'Unduh Excel'; btnIcon.style.display = 'inline'; }
-            } else {
-                exportToExcel(null, null, null);
-                closeExportModal();
-            }
-        }
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <div class="bg-white/50 border border-white/60 p-4 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all text-center tap-scale group" onclick="selectJurusan('APHP')">
+                        <div class="w-10 h-10 mx-auto bg-green-100 text-green-600 rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i data-lucide="wheat" class="w-5 h-5"></i></div>
+                        <h3 class="font-bold text-slate-800 text-xs">APHP</h3><p class="text-[9px] text-slate-400 mt-0.5">Agribisnis Pengolahan</p>
+                    </div>
+                    <div class="bg-white/50 border border-white/60 p-4 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all text-center tap-scale group" onclick="selectJurusan('DPIB')">
+                        <div class="w-10 h-10 mx-auto bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i data-lucide="ruler" class="w-5 h-5"></i></div>
+                        <h3 class="font-bold text-slate-800 text-xs">DPIB</h3><p class="text-[9px] text-slate-400 mt-0.5">Desain Bangunan</p>
+                    </div>
+                    <div class="bg-white/50 border border-white/60 p-4 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all text-center tap-scale group" onclick="selectJurusan('PSPT')">
+                        <div class="w-10 h-10 mx-auto bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i data-lucide="tv" class="w-5 h-5"></i></div>
+                        <h3 class="font-bold text-slate-800 text-xs">PSPT</h3><p class="text-[9px] text-slate-400 mt-0.5">Produksi TV</p>
+                    </div>
+                    <div class="bg-white/50 border border-white/60 p-4 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all text-center tap-scale group" onclick="selectJurusan('KKBT')">
+                        <div class="w-10 h-10 mx-auto bg-pink-100 text-pink-600 rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i data-lucide="palette" class="w-5 h-5"></i></div>
+                        <h3 class="font-bold text-slate-800 text-xs">KKBT</h3><p class="text-[9px] text-slate-400 mt-0.5">Batik & Tekstil</p>
+                    </div>
+                    <div class="bg-white/50 border border-white/60 p-4 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all text-center tap-scale group" onclick="selectJurusan('TKR')">
+                        <div class="w-10 h-10 mx-auto bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform"><i data-lucide="car" class="w-5 h-5"></i></div>
+                        <h3 class="font-bold text-slate-800 text-xs">TKR</h3><p class="text-[9px] text-slate-400 mt-0.5">Teknik Kendaraan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        // ✅ FUNGSI BARU: Mengambil data berdasarkan RENTANG TANGGAL
-        async function fetchHistoricalDataRange(startDate, endDate, type) {
-            const gid = type === 'hadir' ? LOG_GID_HADIR : LOG_GID_IZIN;
-            const url = `https://docs.google.com/spreadsheets/d/${LOG_SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
-            try {
-                const response = await fetch(url); const text = await response.text();
-                const jsonString = text.substring(47).slice(0, -2); const json = JSON.parse(jsonString);
-                const cols = json.table.cols.map(c => (c.label || '').toLowerCase()); const rows = json.table.rows; const result = [];
-                const getVal = (row, colName) => { const idx = cols.indexOf(colName.toLowerCase()); if (idx === -1) return ''; const cell = row.c[idx]; if (!cell || cell.v === null) return ''; if (cell.f) return cell.f; return String(cell.v); };
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (type === 'hadir') result.push({ tanggal: getVal(row, 'tanggal'), nama: getVal(row, 'nama siswa'), kelas: getVal(row, 'kelas'), jurusan: getVal(row, 'jurusan'), waktu: getVal(row, 'waktu'), koordinat: getVal(row, 'koordinat'), jarak: getVal(row, 'jarak') });
-                    else result.push({ tanggal: getVal(row, 'tanggal'), nama: getVal(row, 'nama'), kelas: getVal(row, 'kelas'), jurusan: getVal(row, 'jurusan'), waktu: getVal(row, 'waktu'), jenis_izin: getVal(row, 'jenis izin'), keterangan: getVal(row, 'keterangan'), bukti: getVal(row, 'foto url') });
-                }
-                const filtered = result.filter(row => {
-                    if (!row.tanggal) return false;
-                    let rowDateStr = row.tanggal;
-                    if (rowDateStr.includes('/')) { const parts = rowDateStr.split(' ')[0].split('/'); if (parts.length === 3) { rowDateStr = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`; } }
-                    return rowDateStr >= startDate && rowDateStr <= endDate;
-                });
-                return filtered;
-            } catch (error) { console.error('Error:', error); throw error; }
-        }
+        <!-- VIEW: FORM INPUT (WITH RT/RW FOR PARENTS) -->
+        <div id="viewForm" class="hide animate-in">
+            <div class="flex items-center gap-2 mb-4 cursor-pointer text-slate-500 hover:text-indigo-600 transition-colors tap-scale w-max" onclick="navigateTo('jurusan')">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="font-bold text-xs uppercase tracking-widest">Ganti Jurusan</span>
+            </div>
 
-        async function fetchAllLogData(type) {
-            const gid = type === 'hadir' ? LOG_GID_HADIR : LOG_GID_IZIN;
-            const url = `https://docs.google.com/spreadsheets/d/${LOG_SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
-            try {
-                const response = await fetch(url); const text = await response.text();
-                const jsonString = text.substring(47).slice(0, -2); const json = JSON.parse(jsonString);
-                const cols = json.table.cols.map(c => (c.label || '').toLowerCase()); const rows = json.table.rows; const result = [];
-                const getVal = (row, colName) => { const idx = cols.indexOf(colName.toLowerCase()); if (idx === -1) return ''; const cell = row.c[idx]; if (!cell || cell.v === null) return ''; if (cell.f) return cell.f; return String(cell.v); };
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (type === 'hadir') result.push({ tanggal: getVal(row, 'tanggal'), nama: getVal(row, 'nama siswa'), kelas: getVal(row, 'kelas'), jurusan: getVal(row, 'jurusan'), waktu: getVal(row, 'waktu'), koordinat: getVal(row, 'koordinat'), jarak: getVal(row, 'jarak') });
-                    else result.push({ tanggal: getVal(row, 'tanggal'), nama: getVal(row, 'nama'), kelas: getVal(row, 'kelas'), jurusan: getVal(row, 'jurusan'), waktu: getVal(row, 'waktu'), jenis_izin: getVal(row, 'jenis izin'), keterangan: getVal(row, 'keterangan'), bukti: getVal(row, 'foto url') });
-                }
-                return result;
-            } catch (error) { console.error('Error:', error); throw error; }
-        }
+            <div class="glass-card p-5 md:p-8 rounded-2xl">
+                <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-800">Formulir Biodata Lengkap</h2>
+                        <p class="text-slate-500 text-xs mt-0.5">Jurusan: <span id="displayJurusan" class="font-bold text-indigo-600"></span></p>
+                    </div>
+                    <div class="hidden md:block text-right">
+                        <span class="text-[9px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">(*) Wajib Diisi</span>
+                    </div>
+                </div>
+                
+                <form id="fSiswa" onsubmit="submitForm(event)" class="space-y-8">
+                    
+                    <!-- A. Peserta Didik -->
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center"><i data-lucide="user" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">A. Keterangan Murid</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">NISN <span class="text-rose-500">*</span></label><input type="text" class="form-input" name="nisn" required maxlength="10" pattern="\d{10}" placeholder="0012345678"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">NIK <span class="text-rose-500">*</span></label><input type="text" class="form-input" name="nik" required maxlength="16" pattern="\d{16}" placeholder="16 digit"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Nama Lengkap <span class="text-rose-500">*</span></label><input type="text" class="form-input" name="namaLengkap" required></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Nama Panggilan</label><input type="text" class="form-input" name="namaPanggilan"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Jenis Kelamin <span class="text-rose-500">*</span></label><select class="form-input" name="jenisKelamin" required><option value="">Pilih</option><option>Laki-laki</option><option>Perempuan</option></select></div>
+                            
+                            <!-- Split TTL Siswa -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota/Tempat Lahir <span class="text-rose-500">*</span></label><input type="text" class="form-input" name="tempatLahir" required></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal Lahir <span class="text-rose-500">*</span></label><input type="date" class="form-input" name="tanggalLahir" required></div>
+                            
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Agama <span class="text-rose-500">*</span></label><select class="form-input" name="agama" required><option value="">Pilih</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option></select></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kewarganegaraan</label><input type="text" class="form-input" name="kewarganegaraan" value="WNI"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Anak Ke-</label><input type="number" class="form-input" name="anakKe" min="1"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Jml Saudara Kandung</label><input type="number" class="form-input" name="jmlSaudaraKandung" min="0"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Jml Saudara Tiri</label><input type="number" class="form-input" name="jmlSaudaraTiri" min="0"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Jml Saudara Angkat</label><input type="number" class="form-input" name="jmlSaudaraAngkat" min="0"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Status Yatim/Piatu</label><select class="form-input" name="statusYatim"><option value="">Pilih</option><option>Yatim</option><option>Piatu</option><option>Yatim Piatu</option><option>Lengkap</option></select></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Bahasa Sehari-hari</label><input type="text" class="form-input" name="bahasaSehariHari" placeholder="Indonesia/Jawa/dll"></div>
+                        </div>
+                    </div>
 
-        function exportToExcel(customData = null, startDate = null, endDate = null) {
-            const store = dataStore[activeTab];
-            const data = customData || store.filtered;
-            let tanggalFile, tanggalHuman;
+                    <!-- B. Tempat Tinggal Siswa (Detailed) -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center"><i data-lucide="home" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">B. Alamat Lengkap Murid</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Nomor Rumah & Jalan <span class="text-rose-500">*</span></label><input type="text" class="form-input" name="noRumah" required placeholder="Contoh: Jl. Mawar No. 12"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Dusun/Lingkungan</label><input type="text" class="form-input" name="dusun"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">RT / RW</label><div class="flex gap-2"><input type="text" class="form-input" name="rt" placeholder="001" style="width:50%"><input type="text" class="form-input" name="rw" placeholder="002" style="width:50%"></div></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Desa / Kelurahan</label><input type="text" class="form-input" name="kelurahan"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kecamatan</label><input type="text" class="form-input" name="kecamatan"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota / Kabupaten</label><input type="text" class="form-input" name="kota"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kode Pos</label><input type="text" class="form-input" name="kodePos" maxlength="5"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">No. Telepon/HP Murid</label><input type="tel" class="form-input" name="noTelepon" placeholder="08..."></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tinggal Dengan</label><select class="form-input" name="tinggalDengan"><option value="">Pilih</option><option>Orang Tua</option><option>Saudara</option><option>Asrama</option><option>Kost</option><option>Lainnya</option></select></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Jarak ke Sekolah (km)</label><input type="number" class="form-input" name="jarakSekolah" step="0.1" min="0"></div>
+                        </div>
+                    </div>
+
+                    <!-- C. Kesehatan -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-rose-100 text-rose-600 flex items-center justify-center"><i data-lucide="heart-pulse" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">C. Kesehatan</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Golongan Darah</label><select class="form-input" name="golonganDarah"><option value="">Pilih</option><option>A</option><option>B</option><option>AB</option><option>O</option></select></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Penyakit yang Pernah Diderita</label><input type="text" class="form-input" name="penyakit" placeholder="- jika tidak ada"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kelainan Jasmani</label><input type="text" class="form-input" name="kelainanJasmani" placeholder="- jika tidak ada"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tinggi Badan (cm)</label><input type="number" class="form-input" name="tinggiBadan" min="0"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Berat Badan (kg)</label><input type="number" class="form-input" name="beratBadan" step="0.1" min="0"></div>
+                        </div>
+                    </div>
+
+                    <!-- D. Pendidikan -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-amber-100 text-amber-600 flex items-center justify-center"><i data-lucide="graduation-cap" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">D. Riwayat Pendidikan</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pendidikan Sebelumnya</label><input type="text" class="form-input" name="pendidikanSebelumnya" placeholder="SMP/MTs"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal & Nomor Ijazah</label><input type="text" class="form-input" name="nomorIjazah"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal & Nomor STL/SKHUN</label><input type="text" class="form-input" name="nomorSTL"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Lama Belajar (tahun)</label><input type="number" class="form-input" name="lamaBelajar" min="0"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pindahan Dari Sekolah</label><input type="text" class="form-input" name="pindahanDari" placeholder="Nama sekolah asal"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Diterima di Kelas</label><input type="text" class="form-input" name="diterimaKelas" placeholder="X"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal Diterima</label><input type="date" class="form-input" name="tanggalDiterima"></div>
+                        </div>
+                    </div>
+
+                    <!-- E. Ayah (Detailed + Phone + RT/RW) -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center"><i data-lucide="users" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">E. Data Ayah Kandung</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Nama Ayah</label><input type="text" class="form-input" name="namaAyah"></div>
+                            
+                            <!-- Split TTL Ayah -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota Lahir Ayah</label><input type="text" class="form-input" name="tempatLahirAyah"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal Lahir Ayah</label><input type="date" class="form-input" name="tanggalLahirAyah"></div>
+                            
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Agama Ayah</label><select class="form-input" name="agamaAyah"><option value="">Pilih</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option></select></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kewarganegaraan Ayah</label><input type="text" class="form-input" name="kewarganegaraanAyah" value="WNI"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pendidikan Ayah</label><input type="text" class="form-input" name="pendidikanAyah"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pekerjaan Ayah</label><input type="text" class="form-input" name="pekerjaanAyah"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Penghasilan per Bulan</label><input type="text" class="form-input" name="penghasilanAyah" placeholder="Rp"></div>
+                            
+                            <!-- NEW: No HP Ayah -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">No. HP Ayah</label><input type="tel" class="form-input" name="hpAyah" placeholder="08..."></div>
+                            
+                            <!-- Split Alamat Ayah WITH RT/RW -->
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Alamat Ayah (Jalan/No)</label><input type="text" class="form-input" name="alamatAyahJalan"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">RT / RW Ayah</label><div class="flex gap-2"><input type="text" class="form-input" name="rtAyah" placeholder="001" style="width:50%"><input type="text" class="form-input" name="rwAyah" placeholder="002" style="width:50%"></div></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Desa/Kel Ayah</label><input type="text" class="form-input" name="alamatAyahKel"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kecamatan Ayah</label><input type="text" class="form-input" name="alamatAyahKec"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota Ayah</label><input type="text" class="form-input" name="alamatAyahKota"></div>
+                            
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Status Ayah</label><select class="form-input" name="statusAyah"><option value="">Pilih</option><option>Masih Hidup</option><option>Meninggal Dunia</option></select></div>
+                        </div>
+                    </div>
+
+                    <!-- F. Ibu (Detailed + Phone + RT/RW) -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                         <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-pink-100 text-pink-600 flex items-center justify-center"><i data-lucide="users" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">F. Data Ibu Kandung</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Nama Ibu</label><input type="text" class="form-input" name="namaIbu"></div>
+                            
+                            <!-- Split TTL Ibu -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota Lahir Ibu</label><input type="text" class="form-input" name="tempatLahirIbu"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal Lahir Ibu</label><input type="date" class="form-input" name="tanggalLahirIbu"></div>
+                            
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Agama Ibu</label><select class="form-input" name="agamaIbu"><option value="">Pilih</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option></select></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kewarganegaraan Ibu</label><input type="text" class="form-input" name="kewarganegaraanIbu" value="WNI"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pendidikan Ibu</label><input type="text" class="form-input" name="pendidikanIbu"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pekerjaan Ibu</label><input type="text" class="form-input" name="pekerjaanIbu"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Penghasilan per Bulan</label><input type="text" class="form-input" name="penghasilanIbu" placeholder="Rp"></div>
+                            
+                            <!-- NEW: No HP Ibu -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">No. HP Ibu</label><input type="tel" class="form-input" name="hpIbu" placeholder="08..."></div>
+                            
+                            <!-- Split Alamat Ibu WITH RT/RW -->
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Alamat Ibu (Jalan/No)</label><input type="text" class="form-input" name="alamatIbuJalan"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">RT / RW Ibu</label><div class="flex gap-2"><input type="text" class="form-input" name="rtIbu" placeholder="001" style="width:50%"><input type="text" class="form-input" name="rwIbu" placeholder="002" style="width:50%"></div></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Desa/Kel Ibu</label><input type="text" class="form-input" name="alamatIbuKel"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kecamatan Ibu</label><input type="text" class="form-input" name="alamatIbuKec"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota Ibu</label><input type="text" class="form-input" name="alamatIbuKota"></div>
+
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Status Ibu</label><select class="form-input" name="statusIbu"><option value="">Pilih</option><option>Masih Hidup</option><option>Meninggal Dunia</option></select></div>
+                        </div>
+                    </div>
+
+                    <!-- G. Wali (Detailed + Phone + RT/RW) -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-purple-100 text-purple-600 flex items-center justify-center"><i data-lucide="shield" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">G. Data Wali</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Nama Wali</label><input type="text" class="form-input" name="namaWali"></div>
+                            
+                            <!-- Split TTL Wali -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota Lahir Wali</label><input type="text" class="form-input" name="tempatLahirWali"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Tanggal Lahir Wali</label><input type="date" class="form-input" name="tanggalLahirWali"></div>
+                            
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Agama Wali</label><select class="form-input" name="agamaWali"><option value="">Pilih</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option></select></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kewarganegaraan Wali</label><input type="text" class="form-input" name="kewarganegaraanWali" value="WNI"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Pekerjaan Wali</label><input type="text" class="form-input" name="pekerjaanWali"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Penghasilan per Bulan</label><input type="text" class="form-input" name="penghasilanWali" placeholder="Rp"></div>
+                            
+                            <!-- NEW: No HP Wali -->
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">No. HP Wali</label><input type="tel" class="form-input" name="hpWali" placeholder="08..."></div>
+                            
+                            <!-- Split Alamat Wali WITH RT/RW -->
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Alamat Wali (Jalan/No)</label><input type="text" class="form-input" name="alamatWaliJalan"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">RT / RW Wali</label><div class="flex gap-2"><input type="text" class="form-input" name="rtWali" placeholder="001" style="width:50%"><input type="text" class="form-input" name="rwWali" placeholder="002" style="width:50%"></div></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Desa/Kel Wali</label><input type="text" class="form-input" name="alamatWaliKel"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kecamatan Wali</label><input type="text" class="form-input" name="alamatWaliKec"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kota Wali</label><input type="text" class="form-input" name="alamatWaliKota"></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">No. Telp Alternatif Wali</label><input type="text" class="form-input" name="alamatWaliTelp"></div>
+
+                            <div><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Status Wali</label><select class="form-input" name="statusWali"><option value="">Pilih</option><option>Masih Hidup</option><option>Meninggal Dunia</option></select></div>
+                        </div>
+                    </div>
+
+                    <!-- H. Kegemaran -->
+                    <div class="space-y-4 pt-4 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-orange-100 text-orange-600 flex items-center justify-center"><i data-lucide="smile" class="w-3 h-3"></i></div>
+                            <h3 class="font-black text-slate-700 uppercase tracking-wide text-xs">H. Kegemaran Murid</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kesenian</label><input type="text" class="form-input" name="kegemaranKesenian" placeholder="Musik/Tari/Lukis/dll"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Olah Raga</label><input type="text" class="form-input" name="kegemaranOlahraga" placeholder="Sepak bola/Basket/dll"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Kemasyarakatan/Organisasi</label><input type="text" class="form-input" name="kegemaranOrganisasi" placeholder="Pramuka/PMR/dll"></div>
+                            <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 mb-1 uppercase">Lain-lain</label><input type="text" class="form-input" name="kegemaranLain" placeholder="-"></div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-6 border-t border-slate-200 flex flex-col md:flex-row gap-3">
+                        <button type="submit" class="tap-scale flex-1 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl font-black text-xs tracking-widest shadow-lg shadow-indigo-500/20 uppercase flex items-center justify-center gap-2" id="btnSave">
+                            <i data-lucide="save" class="w-4 h-4"></i> Simpan Data
+                        </button>
+                        <button type="reset" class="tap-scale py-3 px-6 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs hover:bg-slate-200 transition-colors">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- VIEW: DATA (ADMIN & USER READ-ONLY) -->
+        <div id="viewData" class="hide animate-in space-y-5">
+            <div class="flex items-center gap-2 mb-2 cursor-pointer text-slate-500 hover:text-indigo-600 transition-colors tap-scale w-max" onclick="navigateTo('home')">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="font-bold text-xs uppercase tracking-widest">Kembali ke Beranda</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="glass-card p-3 rounded-xl text-center"><div class="text-xl font-black text-indigo-600" id="sTotal">0</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total Murid</div></div>
+                <div class="glass-card p-3 rounded-xl text-center"><div class="text-xl font-black text-emerald-600" id="sAktif">0</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Aktif</div></div>
+                <div class="glass-card p-3 rounded-xl text-center"><div class="text-xl font-black text-amber-600" id="sLulus">0</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Lulus</div></div>
+            </div>
+
+            <div class="glass-card p-3 rounded-xl flex flex-col md:flex-row gap-3 items-center">
+                <div class="relative flex-1 w-full">
+                    <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
+                    <input id="search" class="w-full pl-10 pr-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Cari Nama, NISN, atau NIK..." onkeyup="applyFilters()">
+                </div>
+                <select class="filter-select w-full md:w-auto py-2 px-3 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none" id="filterJurusan" onchange="applyFilters()">
+                    <option value=""> Semua Jurusan</option>
+                    <option value="APHP">APHP</option>
+                    <option value="DPIB">DPIB</option>
+                    <option value="PSPT">PSPT</option>
+                    <option value="KKBT">KKBT</option>
+                    <option value="TKR">TKR</option>
+                </select>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button class="tap-scale flex-1 md:flex-none py-2 px-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-[9px] hover:bg-slate-200" onclick="loadData()">Refresh</button>
+                    <!-- Tombol Export bisa diakses semua role yang sudah login -->
+                    <button class="tap-scale flex-1 md:flex-none py-2 px-3 bg-emerald-500 text-white rounded-lg font-bold text-[9px] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1" onclick="exportXls()"><i data-lucide="file-spreadsheet" class="w-3 h-3"></i> Excel</button>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-xl overflow-hidden custom-scrollbar">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/50 border-b border-slate-100">
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">No</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">NISN</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">NIK</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Nama Murid</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Jenis Kelamin</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Jurusan</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+                                <th class="p-3 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody" class="text-sm font-medium text-slate-700">
+                            <tr><td colspan="8" class="p-6 text-center text-slate-400 font-bold">Klik Refresh untuk memuat data</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="paginationControls" class="flex flex-col md:flex-row items-center justify-between gap-3 glass-card p-3 rounded-xl hide">
+                <div class="text-[9px] font-bold text-slate-500">Menampilkan <span id="pageStart">0</span>-<span id="pageEnd">0</span> dari <span id="totalFiltered">0</span> data</div>
+                <div class="flex items-center gap-1">
+                    <button onclick="changePage('prev')" id="btnPrev" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors tap-scale"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                    <div id="pageNumbers" class="flex gap-1"></div>
+                    <button onclick="changePage('next')" id="btnNext" class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors tap-scale"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LOGIN MODAL -->
+    <div class="modal fixed inset-0 z-[1000] modal-backdrop flex items-center justify-center p-4 hide" id="loginModal">
+        <div class="glass-card w-full max-w-sm rounded-2xl p-6 space-y-6 relative overflow-hidden modal-slide-in bg-white/90">
+            <div class="absolute top-0 right-0 p-6 opacity-5 text-indigo-900"><i data-lucide="lock" class="w-24 h-24"></i></div>
+            <div class="text-center space-y-3 relative z-10">
+                <div class="w-20 h-20 mx-auto animate-float">
+                    <img src="https://lh3.googleusercontent.com/d/15zyF01OHtEgTl8p6bvEkz7xw30ByE2en" alt="Logo" class="w-full h-full object-contain drop-shadow-xl">
+                </div>
+                <div>
+                    <h1 class="text-xl font-black gradient-text">Login Sistem</h1>
+                    <p class="text-slate-400 text-[9px] font-bold tracking-widest uppercase mt-0.5">Otorisasi Akses Data</p>
+                </div>
+            </div>
+            <div class="space-y-4 relative z-10">
+                <div class="relative">
+                    <i data-lucide="user" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="uName" class="w-full pl-10 pr-3 py-2.5 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all" placeholder="Username">
+                </div>
+                <div class="relative">
+                    <i data-lucide="key" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+                    <input type="password" id="uPass" class="w-full pl-10 pr-3 py-2.5 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500/10 outline-none transition-all" placeholder="Password" onkeyup="if(event.key==='Enter')doLogin()">
+                </div>
+                <button class="tap-scale w-full py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg font-black text-xs tracking-widest shadow-lg shadow-indigo-500/20 uppercase" id="btnLogin" onclick="doLogin()">Masuk Aplikasi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="modal fixed inset-0 z-[1000] modal-backdrop flex items-end sm:items-center justify-center p-4 hide" id="editModal">
+        <div class="glass-card w-full max-w-xl rounded-2xl bg-white/95 modal-slide-in modal-fixed-height shadow-2xl">
+            <div class="p-5 border-b border-slate-100 flex-shrink-0 flex items-center justify-between bg-white/50 backdrop-blur-sm rounded-t-2xl">
+                <h2 class="text-base font-black text-slate-800 flex items-center gap-2"><i data-lucide="edit-3" class="w-4 h-4 text-indigo-600"></i> Edit Data Murid</h2>
+                <button onclick="hideModal('editModal')" class="w-7 h-7 flex items-center justify-center bg-slate-100 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-colors tap-scale"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </div>
+            <div class="modal-content-scroll p-5">
+                <form onsubmit="submitEdit(event)" class="space-y-4">
+                    <input type="hidden" id="eRow"><input type="hidden" id="eJurusan">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 mb-4">
+                        <h4 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Identitas Utama</h4>
+                        <div class="grid grid-cols-2 gap-3 opacity-70">
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">NISN</label><input class="w-full p-2 bg-white rounded-lg text-xs font-bold border border-slate-200 cursor-not-allowed" id="eNisn" readonly></div>
+                            <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">NIK</label><input class="w-full p-2 bg-white rounded-lg text-xs font-bold border border-slate-200 cursor-not-allowed" id="eNik" readonly></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Nama Lengkap</label><input class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none" id="eNamaLengkap" required></div>
+                        
+                        <!-- Split TTL in Edit -->
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Kota Lahir</label><input class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none" id="eTempatLahir" required></div>
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Tanggal Lahir</label><input type="date" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none" id="eTanggalLahir" required></div>
+                        
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Jenis Kelamin</label><select class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none" id="eJenisKelamin"><option>Laki-laki</option><option>Perempuan</option></select></div>
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Status Murid</label><select class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold outline-none" id="eStatus"><option>Aktif</option><option>Lulus</option><option>Pindah</option><option>Drop Out</option></select></div>
+                        
+                        <div class="md:col-span-2 border-t border-slate-100 my-2"></div>
+                        
+                        <!-- Address Parsing in Edit -->
+                        <div class="md:col-span-2"><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Alamat Lengkap (Gabungan)</label><textarea class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none resize-none" id="eAlamat" required rows="2"></textarea></div>
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">No. Telepon Murid</label><input class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none" id="eNoTelepon"></div>
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Nama Ayah</label><input class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none" id="eNamaAyah"></div>
+                        <div><label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Nama Ibu</label><input class="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:border-indigo-500 outline-none" id="eNamaIbu"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="p-5 border-t border-slate-100 flex-shrink-0 bg-white/50 backdrop-blur-sm rounded-b-2xl">
+                <div class="flex gap-2">
+                    <button type="button" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-xs hover:bg-slate-200 transition-colors tap-scale" onclick="hideModal('editModal')">Batal</button>
+                    <button type="submit" onclick="document.querySelector('#editModal form').requestSubmit()" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-colors tap-scale flex items-center justify-center gap-1" id="btnEdit"><i data-lucide="save" class="w-3 h-3"></i> Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbwUenLyEUB6MWfBypy2PJI0fGHnyA8NwuD0m4lr8EjgHLqUDz8JZ4OvwWytEsLobR1vhA/exec"; 
+
+let role = "guest", currentJurusan = "", dataAll = [], dataFilter = [];
+let currentPage = 1;
+const itemsPerPage = 10;
+
+const $ = id => document.getElementById(id);
+
+// --- HELPER FUNCTIONS ---
+
+// Fungsi Toast
+const toast = (m,t='ok') => { 
+    const el = $('toast'); const content = $('toastContent'); const icon = $('toastIcon'); const msg = $('toastMessage');
+    msg.textContent = m; el.classList.remove('hide');
+    content.className = "aero-blur bg-white/95 border px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto transform transition-all duration-300";
+    if(t === 'er') { content.classList.add('border-rose-200', 'text-rose-600'); icon.setAttribute('data-lucide', 'alert-circle'); } 
+    else { content.classList.add('border-emerald-200', 'text-emerald-600'); icon.setAttribute('data-lucide', 'check-circle'); }
+    lucide.createIcons();
+    setTimeout(() => { content.classList.remove('translate-y-[-20px]', 'opacity-0'); }, 10);
+    setTimeout(() => { content.classList.add('translate-y-[-20px]', 'opacity-0'); setTimeout(() => el.classList.add('hide'), 300); }, 3000);
+};
+
+const showModal = id => $(id).classList.remove('hide');
+const hideModal = id => $(id).classList.add('hide');
+const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
+
+// FUNGSI KRUSIAL: Mengubah berbagai format tanggal menjadi YYYY-MM-DD TANPA terpengaruh timezone
+function parseDateToInput(dateStr) {
+    if (!dateStr) return '';
+    
+    // Jika sudah format YYYY-MM-DD (standar ISO dari AppScript baru), kembalikan apa adanya
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr))) {
+        return String(dateStr);
+    }
+
+    // Coba parsing manual untuk format DD-MM-YYYY atau DD/MM/YYYY (fallback data lama)
+    const parts = String(dateStr).match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    
+    if (parts) {
+        const day = parts[1].padStart(2, '0');
+        const month = parts[2].padStart(2, '0');
+        const year = parts[3];
+        return `${year}-${month}-${day}`;
+    }
+
+    // Fallback terakhir: Jika ada karakter 'T' (format ISO lengkap dengan waktu), potong saja
+    if (typeof dateStr === 'string' && dateStr.includes('T')) {
+        return dateStr.split('T')[0];
+    }
+
+    return '';
+}
+
+function formatDateForTTL(dateString) {
+    if (!dateString) return "";
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+const JURUSAN_NAMES = { 'APHP': 'Agribisnis Pengolahan Hasil Pertanian', 'DPIB': 'Desain Pemodelan & Informasi Bangunan', 'PSPT': 'Produksi & Siaran Program Televisi', 'KKBT': 'Kriya Kreatif Batik & Tekstil', 'TKR': 'Teknik Kendaraan Ringan' };
+
+// --- NAVIGATION & AUTH ---
+
+function navigateTo(view) {
+    if (role === 'guest') { showModal('loginModal'); return; }
+    ['viewHome', 'viewJurusan', 'viewForm', 'viewData'].forEach(id => $(id).classList.add('hide'));
+    if(view === 'home') $('viewHome').classList.remove('hide');
+    if(view === 'jurusan') $('viewJurusan').classList.remove('hide');
+    if(view === 'form') $('viewForm').classList.remove('hide');
+    if(view === 'data') { $('viewData').classList.remove('hide'); loadData(); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectJurusan(jurusan) { currentJurusan = jurusan; $('displayJurusan').textContent = JURUSAN_NAMES[jurusan] || jurusan; navigateTo('form'); }
+
+async function doLogin(){
+    const b=$('btnLogin'), u=$('uName').value.trim(), p=$('uPass').value;
+    if(!u||!p) return toast('Isi username & password!','er');
+    b.innerHTML='<span class="animate-pulse">Memproses...</span>'; b.disabled=true;
+    try{
+        const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'login',username:u,password:p})});
+        const d=await r.json();
+        if(d.success){
+            role=d.role; document.body.className=`role-${role}`;
+            $('roleBadge').textContent = role==='admin' ? 'Administrator' : 'Operator';
+            $('roleBadge').className = role==='admin' ? 'badge px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-indigo-600 text-white border border-indigo-500' : 'badge px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-600 border border-emerald-200';
+            hideModal('loginModal'); $('uName').value=''; $('uPass').value=''; sessionStorage.setItem('role', role);
+            toast('Login berhasil! Selamat datang.'); navigateTo('home');
+        } else toast(d.message,'er');
+    }catch(e){toast('Gagal terhubung ke server!','er')}
+    b.innerHTML='Masuk Aplikasi'; b.disabled=false;
+}
+
+function logout(){
+    role='guest'; document.body.className=''; $('roleBadge').textContent='User'; 
+    $('roleBadge').className='badge px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200';
+    sessionStorage.removeItem('role'); navigateTo('home'); toast('Logout berhasil');
+}
+
+window.onload = () => { 
+    lucide.createIcons();
+    const savedRole = sessionStorage.getItem('role');
+    if(savedRole){ 
+        role = savedRole; document.body.className=`role-${role}`;
+        $('roleBadge').textContent = role==='admin' ? 'Administrator' : 'Operator';
+        $('roleBadge').className = role==='admin' ? 'badge px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-indigo-600 text-white border border-indigo-500' : 'badge px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-600 border border-emerald-200';
+    } else { showModal('loginModal'); }
+};
+
+// --- FORM SUBMISSION (COMBINING DATA WITH RT/RW FOR PARENTS) ---
+
+async function submitForm(e){
+    e.preventDefault(); 
+    const b=$('btnSave'); 
+    b.innerHTML='<span class="animate-pulse">Menyimpan...</span>'; 
+    b.disabled=true;
+    
+    const formData = new FormData(e.target);
+    const d = { action:'insert', jurusan: currentJurusan };
+    formData.forEach((v,k) => d[k]=v);
+    
+    // Combine Student Address
+    const noRumah = formData.get('noRumah') || '';
+    const dusun = formData.get('dusun') || '';
+    const rt = formData.get('rt') || '';
+    const rw = formData.get('rw') || '';
+    const kelurahan = formData.get('kelurahan') || '';
+    const kecamatan = formData.get('kecamatan') || '';
+    const kota = formData.get('kota') || '';
+    const kodePos = formData.get('kodePos') || '';
+    
+    let addressParts = [noRumah, dusun, `RT ${rt}/RW ${rw}`, kelurahan, kecamatan, kota, kodePos];
+    let finalAddress = addressParts.filter(part => part && part.trim() !== '' && part !== 'RT /RW ').join(', ');
+    d['alamat'] = finalAddress; 
+    
+    // Combine Student TTL
+    const tempat = formData.get('tempatLahir') || '';
+    const tanggal = formData.get('tanggalLahir') || '';
+    if(tempat && tanggal) d['ttl_combined'] = `${tempat}, ${formatDateForTTL(tanggal)}`;
+
+    // Combine Father Data (WITH RT/RW)
+    const tAyah = formData.get('tempatLahirAyah') || '';
+    const tgAyah = formData.get('tanggalLahirAyah') || '';
+    if(tAyah && tgAyah) d['tempatTanggalLahirAyah'] = `${tAyah}, ${formatDateForTTL(tgAyah)}`;
+    
+    const alAyahJ = formData.get('alamatAyahJalan') || '';
+    const rtAyah = formData.get('rtAyah') || '';
+    const rwAyah = formData.get('rwAyah') || '';
+    const alAyahK = formData.get('alamatAyahKel') || '';
+    const alAyahKc = formData.get('alamatAyahKec') || '';
+    const alAyahKo = formData.get('alamatAyahKota') || '';
+    let addrAyah = [alAyahJ, `RT ${rtAyah}/RW ${rwAyah}`, alAyahK, alAyahKc, alAyahKo].filter(p => p && p.trim() !== '' && p !== 'RT /RW ').join(', ');
+    if(addrAyah) d['alamatAyah'] = addrAyah;
+    
+    // Send Father's Phone Number directly
+    d['hpAyah'] = formData.get('hpAyah') || '';
+
+    // Combine Mother Data (WITH RT/RW)
+    const tIbu = formData.get('tempatLahirIbu') || '';
+    const tgIbu = formData.get('tanggalLahirIbu') || '';
+    if(tIbu && tgIbu) d['tempatTanggalLahirIbu'] = `${tIbu}, ${formatDateForTTL(tgIbu)}`;
+    
+    const alIbuJ = formData.get('alamatIbuJalan') || '';
+    const rtIbu = formData.get('rtIbu') || '';
+    const rwIbu = formData.get('rwIbu') || '';
+    const alIbuK = formData.get('alamatIbuKel') || '';
+    const alIbuKc = formData.get('alamatIbuKec') || '';
+    const alIbuKo = formData.get('alamatIbuKota') || '';
+    let addrIbu = [alIbuJ, `RT ${rtIbu}/RW ${rwIbu}`, alIbuK, alIbuKc, alIbuKo].filter(p => p && p.trim() !== '' && p !== 'RT /RW ').join(', ');
+    if(addrIbu) d['alamatIbu'] = addrIbu;
+    
+    // Send Mother's Phone Number directly
+    d['hpIbu'] = formData.get('hpIbu') || '';
+
+    // Combine Guardian Data (WITH RT/RW)
+    const tWali = formData.get('tempatLahirWali') || '';
+    const tgWali = formData.get('tanggalLahirWali') || '';
+    if(tWali && tgWali) d['tempatTanggalLahirWali'] = `${tWali}, ${formatDateForTTL(tgWali)}`;
+    
+    const alWaliJ = formData.get('alamatWaliJalan') || '';
+    const rtWali = formData.get('rtWali') || '';
+    const rwWali = formData.get('rwWali') || '';
+    const alWaliK = formData.get('alamatWaliKel') || '';
+    const alWaliKc = formData.get('alamatWaliKec') || '';
+    const alWaliKo = formData.get('alamatWaliKota') || '';
+    const alWaliT = formData.get('alamatWaliTelp') || '';
+    let addrWali = [alWaliJ, `RT ${rtWali}/RW ${rwWali}`, alWaliK, alWaliKc, alWaliKo, alWaliT].filter(p => p && p.trim() !== '' && p !== 'RT /RW ').join(', ');
+    if(addrWali) d['alamatWali'] = addrWali;
+    
+    // Send Guardian's Phone Number directly
+    d['hpWali'] = formData.get('hpWali') || '';
+
+    try{
+        const r=await fetch(API,{method:'POST',body:JSON.stringify(d)}); 
+        const res=await r.json();
+        if(res.success){ 
+            toast('Data berhasil disimpan! No: '+res.noUrut); 
+            e.target.reset(); 
+            navigateTo('jurusan'); 
+        } else toast(res.message,'er');
+    }catch(e){ toast('Gagal menyimpan!','er') }
+    b.innerHTML='<i data-lucide="save" class="w-4 h-4"></i> Simpan Data'; b.disabled=false; 
+    lucide.createIcons();
+}
+
+// --- DATA LOADING & RENDERING ---
+
+async function loadData(){
+    // User dan Admin sama-sama bisa load data
+    const tb=$('tbody'); tb.innerHTML='<tr><td colspan="8" class="p-6 text-center"><div class="animate-spin w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-[9px] font-bold text-slate-400">Memuat data...</p></td></tr>';
+    try{
+        const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'getData',search:''})}); const res=await r.json();
+        if(res.success){ dataAll=res.data; applyFilters(); }
+    }catch(e){ tb.innerHTML='<tr><td colspan="8" class="p-6 text-center text-rose-500 font-bold">️ Gagal memuat data</td></tr>'; }
+}
+
+function applyFilters(){
+    const kw = $('search').value.toLowerCase().trim(); const jurusanFilter = $('filterJurusan').value;
+    currentPage = 1;
+    dataFilter = dataAll.filter(r => {
+        const matchSearch = kw === '' || String(r.nisn||'').toLowerCase().includes(kw) || String(r.nik||'').toLowerCase().includes(kw) || String(r.namaLengkap||'').toLowerCase().includes(kw);
+        const matchJurusan = jurusanFilter === '' || r.jurusan === jurusanFilter;
+        return matchSearch && matchJurusan;
+    });
+    render();
+}
+
+function changePage(direction) {
+    const totalPages = Math.ceil(dataFilter.length / itemsPerPage);
+    if (direction === 'next' && currentPage < totalPages) currentPage++;
+    else if (direction === 'prev' && currentPage > 1) currentPage--;
+    render();
+}
+function goToPage(page) { currentPage = page; render(); }
+
+function render() {
+    const tb = $('tbody'); const totalItems = dataFilter.length; const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    const startIndex = (currentPage - 1) * itemsPerPage; const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    const currentData = dataFilter.slice(startIndex, endIndex);
+
+    if (totalItems === 0) {
+        tb.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 font-bold">Tidak ada data ditemukan</td></tr>';
+        $('paginationControls').classList.add('hide'); $('sTotal').textContent = 0; $('sAktif').textContent = 0; $('sLulus').textContent = 0; return;
+    }
+
+    tb.innerHTML = currentData.map((r, i) => `
+        <tr class="border-b border-slate-50 hover:bg-indigo-50/30 transition-colors">
+            <td class="p-3 text-xs font-bold text-slate-400">${startIndex + i + 1}</td>
+            <td class="p-3"><div class="text-xs font-bold text-slate-700">${r.nisn||'-'}</div></td>
+            <td class="p-3"><div class="text-xs text-slate-500 font-mono">${r.nik||'-'}</div></td>
+            <td class="p-3 font-bold text-slate-800">${r.namaLengkap||'-'}</td>
+            <td class="p-3 text-xs">${r.jenisKelamin==='Laki-laki'?'Laki-laki':'Perempuan'}</td>
+            <td class="p-3"><span class="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-600">${r.jurusan||'-'}</span></td>
+            <td class="p-3"><span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold ${(r.status||'aktif').toLowerCase() === 'aktif' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${r.status||'Aktif'}</span></td>
             
-            if (startDate === 'semua_data') {
-                tanggalFile = 'Semua_Data'; tanggalHuman = 'Seluruh Data Historis';
-            } else if (startDate && endDate) {
-                tanggalFile = `${startDate}_s_d_${endDate}`;
-                const startObj = new Date(startDate + 'T00:00:00'); const endObj = new Date(endDate + 'T00:00:00');
-                const startStr = startObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                const endStr = endObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                tanggalHuman = `${startStr} s/d ${endStr}`;
-            } else {
-                tanggalFile = new Date().toISOString().slice(0, 10);
-                tanggalHuman = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            }
-            
-            let headers, excelData, fileName, sheetName;
-            if (activeTab === 'hadir') {
-                headers = ['No', 'Tanggal', 'Nama', 'Kelas', 'Jurusan', 'Waktu', 'Koordinat', 'Jarak'];
-                sheetName = 'Daftar Hadir'; fileName = `Daftar_Hadir_${tanggalFile}.xlsx`; excelData = [headers];
-                data.forEach((row, idx) => { excelData.push([idx + 1, row.tanggal || '', row.nama || '', row.kelas || '', row.jurusan || '', row.waktu || '', row.koordinat || '', row.jarak || '']); });
-            } else {
-                headers = ['No', 'Tanggal', 'Nama', 'Kelas', 'Jurusan', 'Jenis Izin', 'Keterangan', 'Bukti', 'Waktu'];
-                sheetName = 'Daftar Izin'; fileName = `Daftar_Izin_${tanggalFile}.xlsx`; excelData = [headers];
-                data.forEach((row, idx) => { excelData.push([idx + 1, row.tanggal || '', row.nama || '', row.kelas || '', row.jurusan || '', row.jenis_izin || '', row.keterangan || '', row.bukti || '', row.waktu || '']); });
-            }
-            
-            const wb = XLSX.utils.book_new();
-            const headerInfo = [['DAFTAR ' + (activeTab === 'hadir' ? 'HADIR' : 'IZIN') + ' E-PRESENSI'], ['SMK NEGERI 2 TEGALSARI'], ['Periode: ' + tanggalHuman], ['Total Data: ' + data.length + ' siswa'], []];
-            const finalData = [...headerInfo, ...excelData]; const wsFinal = XLSX.utils.aoa_to_sheet(finalData);
-            const colWidths = headers.map((h, i) => { if (i === 2) return { wch: 30 }; if (i === 6 && activeTab === 'izin') return { wch: 40 }; if (i === 7 && activeTab === 'izin') return { wch: 50 }; if (i === 6 && activeTab === 'hadir') return { wch: 25 }; return { wch: Math.max(h.length + 2, 12) }; });
-            wsFinal['!cols'] = colWidths;
-            for (let c = 0; c < headers.length; c++) { const cellA1 = wsFinal[XLSX.utils.encode_cell({ r: 0, c: c })]; const cellA2 = wsFinal[XLSX.utils.encode_cell({ r: 1, c: c })]; if (cellA1) cellA1.s = { font: { bold: true, sz: 14 }, alignment: { horizontal: 'center' } }; if (cellA2) cellA2.s = { font: { bold: true, sz: 12 }, alignment: { horizontal: 'center' } }; }
-            const headerRowIndex = headerInfo.length;
-            for (let c = 0; c < headers.length; c++) { const cell = wsFinal[XLSX.utils.encode_cell({ r: headerRowIndex, c: c })]; if (cell) { cell.s = { font: { bold: true, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "3B82F6" } }, alignment: { horizontal: "center" }, border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } } }; } }
-            if (activeTab === 'izin') { const buktiColIdx = headers.indexOf('Bukti'); for (let i = 0; i < data.length; i++) { const rowIndex = headerRowIndex + 1 + i; const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: buktiColIdx }); const cell = wsFinal[cellAddress]; if (cell && cell.v) { const urls = String(cell.v).split(/[,|]/).map(u => u.trim()).filter(u => u.startsWith('http')); if (urls.length > 0) { cell.l = { Target: urls[0] }; cell.s = { font: { color: { rgb: "0000FF" }, u: "single" } }; } } } }
-            if (activeTab === 'hadir') { const koordinatColIdx = headers.indexOf('Koordinat'); for (let i = 0; i < data.length; i++) { const rowIndex = headerRowIndex + 1 + i; const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: koordinatColIdx }); const cell = wsFinal[cellAddress]; if (cell && cell.v && String(cell.v).includes(',')) { const coords = String(cell.v).split(',').map(c => c.trim()); if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) { cell.l = { Target: `https://www.google.com/maps?q=${coords[0]},${coords[1]}` }; cell.s = { font: { color: { rgb: "0000FF" }, u: "single" } }; } } } }
-            XLSX.utils.book_append_sheet(wb, wsFinal, sheetName); XLSX.writeFile(wb, fileName); showExportSuccess(fileName);
+            <!-- MODIFIKASI: Cek Role untuk menampilkan tombol Aksi -->
+            <td class="p-3 text-center">
+                ${role === 'admin' ? `
+                <div class="flex justify-center gap-2">
+                    <button class="w-7 h-7 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-colors tap-scale" onclick='edit(${JSON.stringify(r).replace(/'/g,"'")})'><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                    <button class="w-7 h-7 flex items-center justify-center bg-rose-100 text-rose-600 rounded-lg hover:bg-rose-600 hover:text-white transition-colors tap-scale" onclick="del(${r.noUrut},'${(r.namaLengkap||'').replace(/'/g,"'")}','${r.jurusan||''}')"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                </div>
+                ` : `
+                <span class="text-[9px] font-bold text-slate-400 italic">Read Only</span>
+                `}
+            </td>
+        </tr>`).join('');
+    
+    $('sTotal').textContent = totalItems; $('sAktif').textContent = dataFilter.filter(d=>d.status==='Aktif').length; $('sLulus').textContent = dataFilter.filter(d=>d.status==='Lulus').length;
+    renderPagination(totalPages, startIndex, endIndex); lucide.createIcons();
+}
+
+function renderPagination(totalPages, startIndex, endIndex) {
+    const controls = $('paginationControls'); const pageNumbers = $('pageNumbers');
+    if (totalPages <= 1) { controls.classList.add('hide'); return; }
+    controls.classList.remove('hide');
+    $('pageStart').textContent = startIndex + 1; $('pageEnd').textContent = endIndex; $('totalFiltered').textContent = dataFilter.length;
+    $('btnPrev').disabled = currentPage === 1; $('btnNext').disabled = currentPage === totalPages;
+    
+    let pagesHtml = ''; const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    if (endPage - startPage + 1 < maxVisiblePages) startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const isActive = i === currentPage;
+        const activeClass = isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600';
+        pagesHtml += `<button onclick="goToPage(${i})" class="w-8 h-8 flex items-center justify-center border rounded-lg font-bold text-[9px] transition-all tap-scale ${activeClass}">${i}</button>`;
+    }
+    pageNumbers.innerHTML = pagesHtml;
+}
+
+// --- EDIT FUNCTION (FIXED DATE PARSING) ---
+
+function edit(r){
+    $('eRow').value=r.noUrut; $('eJurusan').value=r.jurusan; $('eNisn').value=r.nisn; $('eNik').value=r.nik; 
+    $('eNamaLengkap').value=r.namaLengkap||''; 
+    $('eJenisKelamin').value=r.jenisKelamin||'';
+    $('eAlamat').value=r.alamat||''; 
+    $('eStatus').value=r.status||'Aktif';
+    $('eNoTelepon').value=r.noTelepon||'';
+    $('eNamaAyah').value=r.namaAyah||'';
+    $('eNamaIbu').value=r.namaIbu||'';
+
+    // 1. Parse Student TTL
+    let ttl = r.ttl_combined || "";
+    if (!ttl && r.tempatLahir && r.tanggalLahir) {
+         ttl = r.tempatLahir + (r.tanggalLahir ? `, ${r.tanggalLahir}` : '');
+    }
+    
+    if (ttl.includes(',')) {
+        const parts = ttl.split(',');
+        $('eTempatLahir').value = parts[0].trim();
+        // Gunakan helper parseDateToInput untuk menangani DD-MM-YYYY atau DD/MM/YYYY
+        if (parts[1]) {
+            $('eTanggalLahir').value = parseDateToInput(parts[1].trim());
         }
+    } else {
+        $('eTempatLahir').value = ttl;
+        $('eTanggalLahir').value = '';
+    }
 
-        function showExportSuccess(fileName) { const toast = document.createElement('div'); toast.className = 'fixed top-6 right-6 z-[200] bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 font-modern modal-slide-in'; toast.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div><p class="font-black text-sm">Export Berhasil!</p><p class="text-[11px] opacity-90">${fileName}</p></div>`; document.body.appendChild(toast); setTimeout(() => { toast.style.transition = 'all 0.3s ease'; toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 300); }, 3000); }
+    showModal('editModal');
+}
 
-        document.getElementById('exportModal').addEventListener('click', (e) => { if (e.target.id === 'exportModal') closeExportModal(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('exportModal').classList.contains('hidden')) closeExportModal(); });
-        window.onload = fetchAllData;
-    </script>
+async function submitEdit(e){
+    e.preventDefault(); const b=$('btnEdit'); b.innerHTML='<span class="animate-pulse">Menyimpan...</span>'; b.disabled=true;
+    
+    // Re-combine Student TTL for update
+    const tempat = $('eTempatLahir').value;
+    const tanggal = $('eTanggalLahir').value;
+    let ttlCombined = "";
+    if (tempat && tanggal) {
+        const d = new Date(tanggal);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        ttlCombined = `${tempat}, ${day}-${month}-${year}`;
+    }
+
+    const d={ 
+        action:'update', 
+        rowNum:$('eRow').value, 
+        jurusan:$('eJurusan').value, 
+        nisn:$('eNisn').value, 
+        namaLengkap:$('eNamaLengkap').value, 
+        tempatLahir: tempat,
+        tanggalLahir: tanggal,
+        ttl_combined: ttlCombined, 
+        jenisKelamin:$('eJenisKelamin').value, 
+        alamat:$('eAlamat').value, 
+        status:$('eStatus').value, 
+        noTelepon:$('eNoTelepon').value, 
+        namaAyah:$('eNamaAyah').value, 
+        namaIbu:$('eNamaIbu').value 
+    };
+    try{
+        const r=await fetch(API,{method:'POST',body:JSON.stringify(d)}); const res=await r.json();
+        if(res.success){ toast('Data berhasil diperbarui!'); hideModal('editModal'); loadData(); } else toast(res.message,'er');
+    }catch(e){ toast('Gagal update!','er') }
+    b.innerHTML='Simpan'; b.disabled=false;
+}
+
+async function del(nm,nama,jurusan){
+    if(!confirm(`Hapus data "${nama}" dari sheet ${jurusan}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    try{
+        const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'delete',rowNum:nm,jurusan:jurusan})}); const res=await r.json();
+        if(res.success){ toast('Data dihapus!'); loadData(); } else toast(res.message,'er');
+    }catch(e){ toast('Gagal hapus!','er') }
+}
+
+function exportXls(){
+    if(!dataFilter.length) return toast('Tidak ada data untuk diexport!','er');
+    
+    // Nama file dinamis berdasarkan filter
+    let fn = 'BukuInduk_Skarida';
+    if ($('filterJurusan').value) fn += `_${$('filterJurusan').value}`;
+    fn += `_${new Date().toISOString().slice(0,10)}.xlsx`;
+    
+    // Mapping data ke format Excel 67 Kolom (Sesuai struktur Sheet terbaru)
+    const excelData = dataFilter.map((r, i) => ({
+        'No': i + 1,
+        'NISN': r.nisn,
+        'NIK': r.nik,
+        'Nama Lengkap': r.namaLengkap,
+        'Nama Panggilan': r.namaPanggilan,
+        'Jenis Kelamin': r.jenisKelamin,
+        'Tempat Lahir': r.tempatLahir,
+        'Tanggal Lahir': fmtDate(r.tanggalLahir),
+        'Agama': r.agama,
+        'Kewarganegaraan': r.kewarganegaraan,
+        'Anak Ke': r.anakKe,
+        'Jml Saudara Kandung': r.jmlSaudaraKandung,
+        'Jml Saudara Tiri': r.jmlSaudaraTiri,
+        'Jml Saudara Angkat': r.jmlSaudaraAngkat,
+        'Status Yatim Piatu': r.statusYatim,
+        'Bahasa Sehari-hari': r.bahasaSehariHari,
+        'Alamat': r.alamat,
+        'No Telepon': r.noTelepon,
+        'Tinggal Dengan': r.tinggalDengan,
+        'Jarak ke Sekolah': r.jarakSekolah,
+        'Golongan Darah': r.golonganDarah,
+        'Penyakit': r.penyakit,
+        'Kelainan Jasmani': r.kelainanJasmani,
+        'Tinggi Badan': r.tinggiBadan,
+        'Berat Badan': r.beratBadan,
+        'Pendidikan Sebelumnya': r.pendidikanSebelumnya,
+        'Nomor Ijazah': r.nomorIjazah,
+        'Nomor STL': r.nomorSTL,
+        'Lama Belajar': r.lamaBelajar,
+        'Pindahan Dari': r.pindahanDari,
+        'Diterima di Kelas': r.diterimaKelas,
+        'Tanggal Diterima': fmtDate(r.tanggalDiterima),
+        'Nama Ayah': r.namaAyah,
+        'Tempat Tanggal Lahir Ayah': r.tempatTanggalLahirAyah,
+        'Agama Ayah': r.agamaAyah,
+        'Kewarganegaraan Ayah': r.kewarganegaraanAyah,
+        'Pendidikan Ayah': r.pendidikanAyah,
+        'Pekerjaan Ayah': r.pekerjaanAyah,
+        'Penghasilan Ayah': r.penghasilanAyah,
+        'HP Ayah': r.hpAyah,           // Field Baru
+        'Alamat Ayah': r.alamatAyah,
+        'Status Ayah': r.statusAyah,
+        'Nama Ibu': r.namaIbu,
+        'Tempat Tanggal Lahir Ibu': r.tempatTanggalLahirIbu,
+        'Agama Ibu': r.agamaIbu,
+        'Kewarganegaraan Ibu': r.kewarganegaraanIbu,
+        'Pendidikan Ibu': r.pendidikanIbu,
+        'Pekerjaan Ibu': r.pekerjaanIbu,
+        'Penghasilan Ibu': r.penghasilanIbu,
+        'HP Ibu': r.hpIbu,             // Field Baru
+        'Alamat Ibu': r.alamatIbu,
+        'Status Ibu': r.statusIbu,
+        'Nama Wali': r.namaWali,
+        'Tempat Tanggal Lahir Wali': r.tempatTanggalLahirWali,
+        'Agama Wali': r.agamaWali,
+        'Kewarganegaraan Wali': r.kewarganegaraanWali,
+        'Pekerjaan Wali': r.pekerjaanWali,
+        'Penghasilan Wali': r.penghasilanWali,
+        'HP Wali': r.hpWali,           // Field Baru
+        'Alamat Wali': r.alamatWali,
+        'Status Wali': r.statusWali,
+        'Kegemaran Kesenian': r.kegemaranKesenian,
+        'Kegemaran Olahraga': r.kegemaranOlahraga,
+        'Kegemaran Organisasi': r.kegemaranOrganisasi,
+        'Kegemaran Lain': r.kegemaranLain,
+        'Status': r.status
+    }));
+    
+    // Konfigurasi lebar kolom otomatis agar rapi saat dibuka di Excel
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    
+    // Set lebar kolom (A=No, B=NISN, dst...)
+    ws['!cols'] = [
+        {wch:5},{wch:12},{wch:18},{wch:30},{wch:15},{wch:12},{wch:15},{wch:12},
+        {wch:10},{wch:12},{wch:6},{wch:6},{wch:6},{wch:6},{wch:14},{wch:15},
+        {wch:40},{wch:15},{wch:12},{wch:10},{wch:8},{wch:20},{wch:20},{wch:10},
+        {wch:10},{wch:15},{wch:20},{wch:20},{wch:8},{wch:20},{wch:10},{wch:12},
+        {wch:20},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:15}, // HP Ayah
+        {wch:40},{wch:12},{wch:20},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},
+        {wch:12},{wch:15},{wch:40},{wch:12},{wch:20},{wch:20},{wch:10},{wch:12},
+        {wch:12},{wch:12},{wch:15},{wch:40},{wch:12},{wch:15},{wch:15},{wch:15},{wch:10}
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Murid');
+    XLSX.writeFile(wb, fn); 
+    toast(`File "${fn}" berhasil didownload! (${dataFilter.length} data)`);
+}
+</script>
 </body>
 </html>
