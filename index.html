@@ -98,7 +98,6 @@
         .hide { display: none !important; }
         
         /* LOGIKA ROLE BARU */
-        /* Elemen yang HANYA boleh dilihat/diakses oleh Admin */
         .admin-only { display: none !important; } 
         body.role-admin .admin-only { display: inherit !important; }
     </style>
@@ -154,7 +153,6 @@
                     <p class="text-xs text-slate-500 font-medium leading-relaxed">Tambahkan biodata murid baru dengan format detail.</p>
                 </div>
 
-                <!-- DIUBAH: Hapus kelas admin-only agar User juga bisa melihat menu Kelola Data -->
                 <div class="glass-card p-6 rounded-2xl cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group tap-scale" onclick="navigateTo('data')">
                     <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform">
                         <i data-lucide="database" class="w-6 h-6"></i>
@@ -201,7 +199,7 @@
             </div>
         </div>
 
-        <!-- VIEW: FORM INPUT (WITH RT/RW FOR PARENTS) -->
+        <!-- VIEW: FORM INPUT -->
         <div id="viewForm" class="hide animate-in">
             <div class="flex items-center gap-2 mb-4 cursor-pointer text-slate-500 hover:text-indigo-600 transition-colors tap-scale w-max" onclick="navigateTo('jurusan')">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -443,6 +441,8 @@
                     <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
                     <input id="search" class="w-full pl-10 pr-3 py-2 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Cari Nama, NISN, atau NIK..." onkeyup="applyFilters()">
                 </div>
+                
+                <!-- Filter Jurusan -->
                 <select class="filter-select w-full md:w-auto py-2 px-3 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none" id="filterJurusan" onchange="applyFilters()">
                     <option value=""> Semua Jurusan</option>
                     <option value="APHP">APHP</option>
@@ -451,9 +451,18 @@
                     <option value="KKBT">KKBT</option>
                     <option value="TKR">TKR</option>
                 </select>
+
+                <!-- FILTER STATUS BARU -->
+                <select class="filter-select w-full md:w-auto py-2 px-3 bg-white/50 border border-slate-200 rounded-lg text-xs font-bold outline-none" id="filterStatus" onchange="applyFilters()">
+                    <option value=""> Semua Status</option>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Lulus">Lulus</option>
+                    <option value="Pindah">Pindah</option>
+                    <option value="Drop Out">Drop Out</option>
+                </select>
+
                 <div class="flex gap-2 w-full md:w-auto">
                     <button class="tap-scale flex-1 md:flex-none py-2 px-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-[9px] hover:bg-slate-200" onclick="loadData()">Refresh</button>
-                    <!-- Tombol Export bisa diakses semua role yang sudah login -->
                     <button class="tap-scale flex-1 md:flex-none py-2 px-3 bg-emerald-500 text-white rounded-lg font-bold text-[9px] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1" onclick="exportXls()"><i data-lucide="file-spreadsheet" class="w-3 h-3"></i> Excel</button>
                 </div>
             </div>
@@ -576,7 +585,6 @@ const $ = id => document.getElementById(id);
 
 // --- HELPER FUNCTIONS ---
 
-// Fungsi Toast
 const toast = (m,t='ok') => { 
     const el = $('toast'); const content = $('toastContent'); const icon = $('toastIcon'); const msg = $('toastMessage');
     msg.textContent = m; el.classList.remove('hide');
@@ -592,30 +600,17 @@ const showModal = id => $(id).classList.remove('hide');
 const hideModal = id => $(id).classList.add('hide');
 const fmtDate = d => d ? new Date(d).toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}) : '-';
 
-// FUNGSI KRUSIAL: Mengubah berbagai format tanggal menjadi YYYY-MM-DD TANPA terpengaruh timezone
 function parseDateToInput(dateStr) {
     if (!dateStr) return '';
-    
-    // Jika sudah format YYYY-MM-DD (standar ISO dari AppScript baru), kembalikan apa adanya
-    if (/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr))) {
-        return String(dateStr);
-    }
-
-    // Coba parsing manual untuk format DD-MM-YYYY atau DD/MM/YYYY (fallback data lama)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(dateStr))) return String(dateStr);
     const parts = String(dateStr).match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
-    
     if (parts) {
         const day = parts[1].padStart(2, '0');
         const month = parts[2].padStart(2, '0');
         const year = parts[3];
         return `${year}-${month}-${day}`;
     }
-
-    // Fallback terakhir: Jika ada karakter 'T' (format ISO lengkap dengan waktu), potong saja
-    if (typeof dateStr === 'string' && dateStr.includes('T')) {
-        return dateStr.split('T')[0];
-    }
-
+    if (typeof dateStr === 'string' && dateStr.includes('T')) return dateStr.split('T')[0];
     return '';
 }
 
@@ -678,7 +673,7 @@ window.onload = () => {
     } else { showModal('loginModal'); }
 };
 
-// --- FORM SUBMISSION (COMBINING DATA WITH RT/RW FOR PARENTS) ---
+// --- FORM SUBMISSION ---
 
 async function submitForm(e){
     e.preventDefault(); 
@@ -709,7 +704,7 @@ async function submitForm(e){
     const tanggal = formData.get('tanggalLahir') || '';
     if(tempat && tanggal) d['ttl_combined'] = `${tempat}, ${formatDateForTTL(tanggal)}`;
 
-    // Combine Father Data (WITH RT/RW)
+    // Combine Father Data
     const tAyah = formData.get('tempatLahirAyah') || '';
     const tgAyah = formData.get('tanggalLahirAyah') || '';
     if(tAyah && tgAyah) d['tempatTanggalLahirAyah'] = `${tAyah}, ${formatDateForTTL(tgAyah)}`;
@@ -722,11 +717,9 @@ async function submitForm(e){
     const alAyahKo = formData.get('alamatAyahKota') || '';
     let addrAyah = [alAyahJ, `RT ${rtAyah}/RW ${rwAyah}`, alAyahK, alAyahKc, alAyahKo].filter(p => p && p.trim() !== '' && p !== 'RT /RW ').join(', ');
     if(addrAyah) d['alamatAyah'] = addrAyah;
-    
-    // Send Father's Phone Number directly
     d['hpAyah'] = formData.get('hpAyah') || '';
 
-    // Combine Mother Data (WITH RT/RW)
+    // Combine Mother Data
     const tIbu = formData.get('tempatLahirIbu') || '';
     const tgIbu = formData.get('tanggalLahirIbu') || '';
     if(tIbu && tgIbu) d['tempatTanggalLahirIbu'] = `${tIbu}, ${formatDateForTTL(tgIbu)}`;
@@ -739,11 +732,9 @@ async function submitForm(e){
     const alIbuKo = formData.get('alamatIbuKota') || '';
     let addrIbu = [alIbuJ, `RT ${rtIbu}/RW ${rwIbu}`, alIbuK, alIbuKc, alIbuKo].filter(p => p && p.trim() !== '' && p !== 'RT /RW ').join(', ');
     if(addrIbu) d['alamatIbu'] = addrIbu;
-    
-    // Send Mother's Phone Number directly
     d['hpIbu'] = formData.get('hpIbu') || '';
 
-    // Combine Guardian Data (WITH RT/RW)
+    // Combine Guardian Data
     const tWali = formData.get('tempatLahirWali') || '';
     const tgWali = formData.get('tanggalLahirWali') || '';
     if(tWali && tgWali) d['tempatTanggalLahirWali'] = `${tWali}, ${formatDateForTTL(tgWali)}`;
@@ -757,8 +748,6 @@ async function submitForm(e){
     const alWaliT = formData.get('alamatWaliTelp') || '';
     let addrWali = [alWaliJ, `RT ${rtWali}/RW ${rwWali}`, alWaliK, alWaliKc, alWaliKo, alWaliT].filter(p => p && p.trim() !== '' && p !== 'RT /RW ').join(', ');
     if(addrWali) d['alamatWali'] = addrWali;
-    
-    // Send Guardian's Phone Number directly
     d['hpWali'] = formData.get('hpWali') || '';
 
     try{
@@ -777,7 +766,6 @@ async function submitForm(e){
 // --- DATA LOADING & RENDERING ---
 
 async function loadData(){
-    // User dan Admin sama-sama bisa load data
     const tb=$('tbody'); tb.innerHTML='<tr><td colspan="8" class="p-6 text-center"><div class="animate-spin w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div><p class="text-[9px] font-bold text-slate-400">Memuat data...</p></td></tr>';
     try{
         const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'getData',search:''})}); const res=await r.json();
@@ -786,12 +774,16 @@ async function loadData(){
 }
 
 function applyFilters(){
-    const kw = $('search').value.toLowerCase().trim(); const jurusanFilter = $('filterJurusan').value;
+    const kw = $('search').value.toLowerCase().trim(); 
+    const jurusanFilter = $('filterJurusan').value;
+    const statusFilter = $('filterStatus').value; // Ambil nilai filter status
+    
     currentPage = 1;
     dataFilter = dataAll.filter(r => {
         const matchSearch = kw === '' || String(r.nisn||'').toLowerCase().includes(kw) || String(r.nik||'').toLowerCase().includes(kw) || String(r.namaLengkap||'').toLowerCase().includes(kw);
         const matchJurusan = jurusanFilter === '' || r.jurusan === jurusanFilter;
-        return matchSearch && matchJurusan;
+        const matchStatus = statusFilter === '' || r.status === statusFilter; // Cek kecocokan status
+        return matchSearch && matchJurusan && matchStatus;
     });
     render();
 }
@@ -826,7 +818,6 @@ function render() {
             <td class="p-3"><span class="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-600">${r.jurusan||'-'}</span></td>
             <td class="p-3"><span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold ${(r.status||'aktif').toLowerCase() === 'aktif' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${r.status||'Aktif'}</span></td>
             
-            <!-- MODIFIKASI: Cek Role untuk menampilkan tombol Aksi -->
             <td class="p-3 text-center">
                 ${role === 'admin' ? `
                 <div class="flex justify-center gap-2">
@@ -839,7 +830,9 @@ function render() {
             </td>
         </tr>`).join('');
     
-    $('sTotal').textContent = totalItems; $('sAktif').textContent = dataFilter.filter(d=>d.status==='Aktif').length; $('sLulus').textContent = dataFilter.filter(d=>d.status==='Lulus').length;
+    $('sTotal').textContent = totalItems; 
+    $('sAktif').textContent = dataFilter.filter(d=>d.status==='Aktif').length; 
+    $('sLulus').textContent = dataFilter.filter(d=>d.status==='Lulus').length;
     renderPagination(totalPages, startIndex, endIndex); lucide.createIcons();
 }
 
@@ -863,7 +856,7 @@ function renderPagination(totalPages, startIndex, endIndex) {
     pageNumbers.innerHTML = pagesHtml;
 }
 
-// --- EDIT FUNCTION (FIXED DATE PARSING) ---
+// --- EDIT FUNCTION ---
 
 function edit(r){
     $('eRow').value=r.noUrut; $('eJurusan').value=r.jurusan; $('eNisn').value=r.nisn; $('eNik').value=r.nik; 
@@ -875,7 +868,6 @@ function edit(r){
     $('eNamaAyah').value=r.namaAyah||'';
     $('eNamaIbu').value=r.namaIbu||'';
 
-    // 1. Parse Student TTL
     let ttl = r.ttl_combined || "";
     if (!ttl && r.tempatLahir && r.tanggalLahir) {
          ttl = r.tempatLahir + (r.tanggalLahir ? `, ${r.tanggalLahir}` : '');
@@ -884,7 +876,6 @@ function edit(r){
     if (ttl.includes(',')) {
         const parts = ttl.split(',');
         $('eTempatLahir').value = parts[0].trim();
-        // Gunakan helper parseDateToInput untuk menangani DD-MM-YYYY atau DD/MM/YYYY
         if (parts[1]) {
             $('eTanggalLahir').value = parseDateToInput(parts[1].trim());
         }
@@ -899,7 +890,6 @@ function edit(r){
 async function submitEdit(e){
     e.preventDefault(); const b=$('btnEdit'); b.innerHTML='<span class="animate-pulse">Menyimpan...</span>'; b.disabled=true;
     
-    // Re-combine Student TTL for update
     const tempat = $('eTempatLahir').value;
     const tanggal = $('eTanggalLahir').value;
     let ttlCombined = "";
@@ -945,12 +935,11 @@ async function del(nm,nama,jurusan){
 function exportXls(){
     if(!dataFilter.length) return toast('Tidak ada data untuk diexport!','er');
     
-    // Nama file dinamis berdasarkan filter
     let fn = 'BukuInduk_Skarida';
     if ($('filterJurusan').value) fn += `_${$('filterJurusan').value}`;
+    if ($('filterStatus').value) fn += `_${$('filterStatus').value}`;
     fn += `_${new Date().toISOString().slice(0,10)}.xlsx`;
     
-    // Mapping data ke format Excel 67 Kolom (Sesuai struktur Sheet terbaru)
     const excelData = dataFilter.map((r, i) => ({
         'No': i + 1,
         'NISN': r.nisn,
@@ -991,7 +980,7 @@ function exportXls(){
         'Pendidikan Ayah': r.pendidikanAyah,
         'Pekerjaan Ayah': r.pekerjaanAyah,
         'Penghasilan Ayah': r.penghasilanAyah,
-        'HP Ayah': r.hpAyah,           // Field Baru
+        'HP Ayah': r.hpAyah,
         'Alamat Ayah': r.alamatAyah,
         'Status Ayah': r.statusAyah,
         'Nama Ibu': r.namaIbu,
@@ -1001,7 +990,7 @@ function exportXls(){
         'Pendidikan Ibu': r.pendidikanIbu,
         'Pekerjaan Ibu': r.pekerjaanIbu,
         'Penghasilan Ibu': r.penghasilanIbu,
-        'HP Ibu': r.hpIbu,             // Field Baru
+        'HP Ibu': r.hpIbu,
         'Alamat Ibu': r.alamatIbu,
         'Status Ibu': r.statusIbu,
         'Nama Wali': r.namaWali,
@@ -1010,7 +999,7 @@ function exportXls(){
         'Kewarganegaraan Wali': r.kewarganegaraanWali,
         'Pekerjaan Wali': r.pekerjaanWali,
         'Penghasilan Wali': r.penghasilanWali,
-        'HP Wali': r.hpWali,           // Field Baru
+        'HP Wali': r.hpWali,
         'Alamat Wali': r.alamatWali,
         'Status Wali': r.statusWali,
         'Kegemaran Kesenian': r.kegemaranKesenian,
@@ -1020,17 +1009,15 @@ function exportXls(){
         'Status': r.status
     }));
     
-    // Konfigurasi lebar kolom otomatis agar rapi saat dibuka di Excel
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
     
-    // Set lebar kolom (A=No, B=NISN, dst...)
     ws['!cols'] = [
         {wch:5},{wch:12},{wch:18},{wch:30},{wch:15},{wch:12},{wch:15},{wch:12},
         {wch:10},{wch:12},{wch:6},{wch:6},{wch:6},{wch:6},{wch:14},{wch:15},
         {wch:40},{wch:15},{wch:12},{wch:10},{wch:8},{wch:20},{wch:20},{wch:10},
         {wch:10},{wch:15},{wch:20},{wch:20},{wch:8},{wch:20},{wch:10},{wch:12},
-        {wch:20},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:15}, // HP Ayah
+        {wch:20},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:15},
         {wch:40},{wch:12},{wch:20},{wch:20},{wch:10},{wch:12},{wch:12},{wch:12},
         {wch:12},{wch:15},{wch:40},{wch:12},{wch:20},{wch:20},{wch:10},{wch:12},
         {wch:12},{wch:12},{wch:15},{wch:40},{wch:12},{wch:15},{wch:15},{wch:15},{wch:10}
